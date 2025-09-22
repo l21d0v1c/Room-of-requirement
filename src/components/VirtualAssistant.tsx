@@ -164,7 +164,10 @@ const VirtualAssistant: React.FC<VirtualAssistantProps> = ({ safeword, safecomma
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
-      <Card className="w-full max-w-lg text-center">
+      <Card className="w-full max-w-lg text-center relative">
+        <div className="absolute top-2 right-4 text-sm text-gray-500 dark:text-gray-400">
+          Page 4
+        </div>
         <CardHeader>
           <CardTitle className="text-3xl font-bold">Nina, votre assistante virtuelle</CardTitle>
         </CardHeader>

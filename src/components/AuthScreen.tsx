@@ -126,9 +126,22 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
     return null;
   }
 
+  // Determine current page number
+  let currentPageNumber: number;
+  if (!isConfigured) {
+    currentPageNumber = 1; // Configuration
+  } else if (!showVoicePrompt) {
+    currentPageNumber = 2; // Login
+  } else {
+    currentPageNumber = 3; // Voice confirmation
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md relative">
+        <div className="absolute top-2 right-4 text-sm text-gray-500 dark:text-gray-400">
+          Page {currentPageNumber}
+        </div>
         <CardHeader>
           <CardTitle className="text-2xl">Bienvenue à Nina</CardTitle>
           <CardDescription>
