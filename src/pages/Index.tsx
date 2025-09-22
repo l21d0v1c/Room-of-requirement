@@ -1,15 +1,37 @@
-import React from 'react';
-import { MadeWithDyad } from "@/components/made-with-dyad";
+import React, { useState } from 'react';
+import AuthScreen from '@/components/AuthScreen';
+import VirtualAssistant from '@/components/VirtualAssistant';
+import { clearConfig } from '@/utils/storage';
 
 const Index = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [ninaConfig, setNinaConfig] = useState<{ safeword: string; safecommand: string } | null>(null);
+
+  const handleAuthenticated = (config: { safeword: string; safecommand: string }) => {
+    setNinaConfig(config);
+    setIsAuthenticated(true);
+  };
+
+  const handleShutdown = () => {
+    clearConfig(); // Clear config on shutdown
+    setIsAuthenticated(false);
+    setNinaConfig(null);
+    // Optionally, force a page reload to ensure full reset
+    window.location.reload();
+  };
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
-      <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-200 mb-8">Bienvenue sur votre application !</h1>
-      <p className="text-lg text-gray-600 dark:text-gray-400 mb-12">
-        Ceci est votre page d'accueil par défaut.
-      </p>
-      <MadeWithDyad />
-    </div>
+    <>
+      {isAuthenticated && ninaConfig ? (
+        <VirtualAssistant
+          safeword={ninaConfig.safeword}
+          safecommand={ninaConfig.safecommand}
+          onShutdown={handleShutdown}
+        />
+      ) : (
+        <AuthScreen onAuthenticated={handleAuthenticated} />
+      )}
+    </>
   );
 };
 
