@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Mic, MicOff, PowerOff } from 'lucide-react';
+import { Input } from '@/components/ui/input'; // Import the Input component
+import { Mic, MicOff, PowerOff, Send } from 'lucide-react'; // Import Send icon
 import useSpeechRecognition from '@/hooks/useSpeechRecognition';
 import { showSuccess, showError, showLoading, dismissToast } from '@/utils/toast';
 
@@ -14,6 +15,7 @@ interface VirtualAssistantProps {
 const VirtualAssistant: React.FC<VirtualAssistantProps> = ({ safeword, safecommand, onShutdown }) => {
   const [ninaResponse, setNinaResponse] = useState<string>("Que puis-je faire pour vous monsieur ?");
   const [isNinaActive, setIsNinaActive] = useState<boolean>(false); // Nina is active after "Nina" is said
+  const [textCommand, setTextCommand] = useState<string>(''); // New state for text input
   const { transcript, isListening, startListening, stopListening, browserSupportsSpeechRecognition } = useSpeechRecognition();
 
   useEffect(() => {
@@ -23,13 +25,15 @@ const VirtualAssistant: React.FC<VirtualAssistantProps> = ({ safeword, safecomma
   }, [browserSupportsSpeechRecognition]);
 
   useEffect(() => {
-    if (!isListening && transcript) {
+    if (isListening) {
+      setTextCommand(transcript); // Update text input with live transcript
+    } else if (transcript) {
+      // When listening stops and there's a transcript, process it
       console.log("Transcript:", transcript);
       processCommand(transcript);
-      // Clear transcript after processing to avoid re-processing the same command
-      // This is handled internally by useSpeechRecognition now, but good to keep in mind.
+      setTextCommand(''); // Clear input after voice command
     }
-  }, [transcript, isListening]);
+  }, [transcript, isListening]); // Depend on transcript and isListening
 
   const processCommand = (command: string) => {
     const lowerCommand = command.toLowerCase();
@@ -56,6 +60,9 @@ const VirtualAssistant: React.FC<VirtualAssistantProps> = ({ safeword, safecomma
       if (isNinaActive) {
         setNinaResponse("Je n'ai pas compris votre demande. Veuillez répéter ou dire 'Nina' pour me réactiver.");
         setIsNinaActive(false); // Reset Nina's active state
+      } else {
+        // If Nina is not active and "Nina" wasn't said, just ignore the command
+        setNinaResponse("Veuillez dire 'Nina' avant votre commande, monsieur.");
       }
     }
   };
@@ -106,6 +113,13 @@ const VirtualAssistant: React.FC<VirtualAssistantProps> = ({ safeword, safecomma
     }
   };
 
+  const handleTextCommandSubmit = () => {
+    if (textCommand.trim()) {
+      processCommand(textCommand);
+      setTextCommand(''); // Clear input after text command
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
       <Card className="w-full max-w-lg text-center">
@@ -132,9 +146,24 @@ const VirtualAssistant: React.FC<VirtualAssistantProps> = ({ safeword, safecomma
             </div>
           </div>
           <p className="text-xl font-medium text-gray-800 dark:text-gray-200">{ninaResponse}</p>
-          {isListening && (
-            <p className="text-sm text-muted-foreground">Vous avez dit : "{transcript}"</p>
-          )}
+
+          <div className="flex w-full items-center space-x-2 mt-4">
+            <Input
+              type="text"
+              placeholder="Tapez votre commande ici ou parlez..."
+              value={textCommand}
+              onChange={(e) => setTextCommand(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  handleTextCommandSubmit();
+                }
+              }}
+            />
+            <Button type="submit" onClick={handleTextCommandSubmit}>
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
+
           <Button variant="destructive" onClick={onShutdown} className="w-full mt-4">
             <PowerOff className="mr-2 h-4 w-4" /> Éteindre Nina
           </Button>
