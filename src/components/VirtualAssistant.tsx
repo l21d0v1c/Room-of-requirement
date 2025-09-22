@@ -16,6 +16,7 @@ const VirtualAssistant: React.FC<VirtualAssistantProps> = ({ safeword, safecomma
   const [ninaResponse, setNinaResponse] = useState<string>("Que puis-je faire pour vous monsieur ?");
   const [isNinaActive, setIsNinaActive] = useState<boolean>(false); // Nina is active after "Nina" is said
   const [textCommand, setTextCommand] = useState<string>(''); // New state for text input
+  const [isProcessingCommand, setIsProcessingCommand] = useState<boolean>(false); // New state for processing indicator
   const { transcript, isListening, startListening, stopListening, browserSupportsSpeechRecognition } = useSpeechRecognition();
 
   useEffect(() => {
@@ -27,9 +28,11 @@ const VirtualAssistant: React.FC<VirtualAssistantProps> = ({ safeword, safecomma
   useEffect(() => {
     if (isListening) {
       setTextCommand(transcript); // Update text input with live transcript
+      setIsProcessingCommand(false); // Not processing while listening
     } else if (transcript) {
       // When listening stops and there's a transcript, process it
       console.log("Transcript:", transcript);
+      setIsProcessingCommand(true); // Indicate processing has started
       processCommand(transcript);
       setTextCommand(''); // Clear input after voice command
     }
@@ -37,12 +40,15 @@ const VirtualAssistant: React.FC<VirtualAssistantProps> = ({ safeword, safecomma
 
   const processCommand = (command: string) => {
     const lowerCommand = command.toLowerCase();
+    let response = "Je n'ai pas compris cette action, monsieur."; // Default response
 
     // Check for safeword/safecommand
     if (lowerCommand.includes(safeword.toLowerCase()) || lowerCommand.includes(safecommand.toLowerCase())) {
-      setNinaResponse("Commande d'urgence détectée. Arrêt immédiat de l'application.");
+      response = "Commande d'urgence détectée. Arrêt immédiat de l'application.";
+      setNinaResponse(response);
       showError("Arrêt d'urgence activé !");
       setTimeout(onShutdown, 2000); // Shutdown after a short delay
+      setIsProcessingCommand(false); // Stop processing indicator
       return;
     }
 
@@ -51,57 +57,52 @@ const VirtualAssistant: React.FC<VirtualAssistantProps> = ({ safeword, safecomma
       const action = lowerCommand.replace("nina", "").trim();
 
       if (action === "") {
-        setNinaResponse("Que puis-je faire pour vous monsieur ?");
+        response = "Que puis-je faire pour vous monsieur ?";
       } else {
-        executeAction(action);
+        // Execute action logic
+        if (action.startsWith("va sur ")) {
+          const url = action.replace("va sur ", "").trim();
+          if (url) {
+            const fullUrl = url.startsWith('http') ? url : `https://${url}`;
+            window.open(fullUrl, '_blank');
+            response = `J'ouvre ${url} pour vous, monsieur.`;
+            showSuccess(response);
+          }
+        } else if (action.startsWith("cherche ")) {
+          const query = action.replace("cherche ", "").trim();
+          if (query) {
+            window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank');
+            response = `Je recherche "${query}" pour vous, monsieur.`;
+            showSuccess(response);
+          }
+        } else if (action.includes("mot de passe")) {
+          response = "Veuillez taper votre mot de passe monsieur.";
+          showSuccess(response);
+        } else if (action.includes("scroll down") || action.includes("descendre")) {
+          window.scrollBy({ top: window.innerHeight / 2, behavior: 'smooth' });
+          response = "Je fais défiler la page vers le bas, monsieur.";
+          showSuccess(response);
+        } else if (action.includes("scroll up") || action.includes("remonter")) {
+          window.scrollBy({ top: -window.innerHeight / 2, behavior: 'smooth' });
+          response = "Je fais défiler la page vers le haut, monsieur.";
+          showSuccess(response);
+        }
+        // Add more simulated web actions here
       }
     } else {
       // If Nina is not active (i.e., "Nina" wasn't said first), ignore other commands
       if (isNinaActive) {
-        setNinaResponse("Je n'ai pas compris votre demande. Veuillez répéter ou dire 'Nina' pour me réactiver.");
+        response = "Je n'ai pas compris votre demande. Veuillez répéter ou dire 'Nina' pour me réactiver.";
         setIsNinaActive(false); // Reset Nina's active state
       } else {
         // If Nina is not active and "Nina" wasn't said, just ignore the command
-        setNinaResponse("Veuillez dire 'Nina' avant votre commande, monsieur.");
+        response = "Veuillez dire 'Nina' avant votre commande, monsieur.";
       }
     }
-  };
-
-  const executeAction = (action: string) => {
-    let response = "Je n'ai pas compris cette action, monsieur.";
-
-    if (action.startsWith("va sur ")) {
-      const url = action.replace("va sur ", "").trim();
-      if (url) {
-        const fullUrl = url.startsWith('http') ? url : `https://${url}`;
-        window.open(fullUrl, '_blank');
-        response = `J'ouvre ${url} pour vous, monsieur.`;
-        showSuccess(response);
-      }
-    } else if (action.startsWith("cherche ")) {
-      const query = action.replace("cherche ", "").trim();
-      if (query) {
-        window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank');
-        response = `Je recherche "${query}" pour vous, monsieur.`;
-        showSuccess(response);
-      }
-    } else if (action.includes("mot de passe")) {
-      response = "Veuillez taper votre mot de passe monsieur.";
-      showSuccess(response);
-    } else if (action.includes("scroll down") || action.includes("descendre")) {
-      // Simulate scrolling down - actual scrolling is complex for a web app without knowing context
-      window.scrollBy({ top: window.innerHeight / 2, behavior: 'smooth' });
-      response = "Je fais défiler la page vers le bas, monsieur.";
-      showSuccess(response);
-    } else if (action.includes("scroll up") || action.includes("remonter")) {
-      window.scrollBy({ top: -window.innerHeight / 2, behavior: 'smooth' });
-      response = "Je fais défiler la page vers le haut, monsieur.";
-      showSuccess(response);
-    }
-    // Add more simulated web actions here
 
     setNinaResponse(response);
     setIsNinaActive(false); // Reset Nina's active state after executing an action
+    setIsProcessingCommand(false); // Stop processing indicator
   };
 
   const toggleListening = () => {
@@ -115,6 +116,7 @@ const VirtualAssistant: React.FC<VirtualAssistantProps> = ({ safeword, safecomma
 
   const handleTextCommandSubmit = () => {
     if (textCommand.trim()) {
+      setIsProcessingCommand(true); // Indicate processing has started for text command
       processCommand(textCommand);
       setTextCommand(''); // Clear input after text command
     }
@@ -145,7 +147,9 @@ const VirtualAssistant: React.FC<VirtualAssistantProps> = ({ safeword, safecomma
               )}
             </div>
           </div>
-          <p className="text-xl font-medium text-gray-800 dark:text-gray-200">{ninaResponse}</p>
+          <p className="text-xl font-medium text-gray-800 dark:text-gray-200">
+            {isProcessingCommand ? "Traitement de votre commande..." : ninaResponse}
+          </p>
 
           <div className="flex w-full items-center space-x-2 mt-4">
             <Input
