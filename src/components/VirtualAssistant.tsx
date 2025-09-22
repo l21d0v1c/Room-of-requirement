@@ -134,8 +134,8 @@ const VirtualAssistant: React.FC<VirtualAssistantProps> = ({ safeword, safecomma
       setNinaResponse(isNinaActive ? "J'ai arrêté d'écouter, monsieur." : "Dites 'Nina' ou cliquez sur le micro pour m'activer.");
     } else {
       startListening(true); // Manual click always starts continuous listening
-      setIsNinaActive(true); // Explicitly activate Nina when mic button is clicked
-      setNinaResponse("J'écoute, monsieur...");
+      // Nina is NOT explicitly activated here. It waits for the 'nina' keyword.
+      setNinaResponse("Dites 'Nina' pour m'activer, monsieur.");
     }
   };
 
