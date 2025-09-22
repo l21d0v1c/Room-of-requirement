@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input'; // Import the Input component
-import { Mic, MicOff, PowerOff, Send } from 'lucide-react'; // Import Send icon
+import { Input } from '@/components/ui/input';
+import { Mic, MicOff, PowerOff, Send } from 'lucide-react';
 import useSpeechRecognition from '@/hooks/useSpeechRecognition';
 import { showSuccess, showError, showLoading, dismissToast } from '@/utils/toast';
 
@@ -14,16 +14,22 @@ interface VirtualAssistantProps {
 
 const VirtualAssistant: React.FC<VirtualAssistantProps> = ({ safeword, safecommand, onShutdown }) => {
   const [ninaResponse, setNinaResponse] = useState<string>("Que puis-je faire pour vous monsieur ?");
-  const [isNinaActive, setIsNinaActive] = useState<boolean>(false); // Nina is active after "Nina" is said
-  const [textCommand, setTextCommand] = useState<string>(''); // New state for text input
-  const [isProcessingCommand, setIsProcessingCommand] = useState<boolean>(false); // New state for processing indicator
+  const [isNinaActive, setIsNinaActive] = useState<boolean>(true); // Nina is active by default on this screen
+  const [textCommand, setTextCommand] = useState<string>('');
+  const [isProcessingCommand, setIsProcessingCommand] = useState<boolean>(false);
   const { transcript, isListening, startListening, stopListening, browserSupportsSpeechRecognition } = useSpeechRecognition();
 
   useEffect(() => {
     if (!browserSupportsSpeechRecognition) {
       showError("Votre navigateur ne supporte pas la reconnaissance vocale. Nina ne pourra pas écouter vos commandes.");
+    } else {
+      // Start listening automatically when the component mounts
+      startListening();
+      setNinaResponse("J'écoute, monsieur...");
     }
-  }, [browserSupportsSpeechRecognition]);
+    // Ensure Nina is active when the component mounts
+    setIsNinaActive(true);
+  }, [browserSupportsSpeechRecognition, startListening]); // Depend on browserSupportsSpeechRecognition and startListening
 
   useEffect(() => {
     if (isListening) {
@@ -36,7 +42,7 @@ const VirtualAssistant: React.FC<VirtualAssistantProps> = ({ safeword, safecomma
       processCommand(transcript);
       setTextCommand(''); // Clear input after voice command
     }
-  }, [transcript, isListening]); // Depend on transcript and isListening
+  }, [transcript, isListening]);
 
   const processCommand = (command: string) => {
     const lowerCommand = command.toLowerCase();
@@ -53,7 +59,7 @@ const VirtualAssistant: React.FC<VirtualAssistantProps> = ({ safeword, safecomma
     }
 
     if (lowerCommand.startsWith("nina")) {
-      setIsNinaActive(true);
+      setIsNinaActive(true); // Re-activate Nina if "Nina" is said
       const action = lowerCommand.replace("nina", "").trim();
 
       if (action === "") {
@@ -101,8 +107,11 @@ const VirtualAssistant: React.FC<VirtualAssistantProps> = ({ safeword, safecomma
     }
 
     setNinaResponse(response);
-    setIsNinaActive(false); // Reset Nina's active state after executing an action
+    // After processing a command, Nina should go back to listening for the next command,
+    // but the `isNinaActive` state should be reset if "Nina" wasn't explicitly said.
+    // The `startListening()` in the initial useEffect will handle continuous listening.
     setIsProcessingCommand(false); // Stop processing indicator
+    startListening(); // Restart listening after processing a command
   };
 
   const toggleListening = () => {
@@ -116,9 +125,9 @@ const VirtualAssistant: React.FC<VirtualAssistantProps> = ({ safeword, safecomma
 
   const handleTextCommandSubmit = () => {
     if (textCommand.trim()) {
-      setIsProcessingCommand(true); // Indicate processing has started for text command
+      setIsProcessingCommand(true);
       processCommand(textCommand);
-      setTextCommand(''); // Clear input after text command
+      setTextCommand('');
     }
   };
 
