@@ -20,6 +20,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentPasswordAttempt, setCurrentPasswordAttempt] = useState('');
   const [showVoicePrompt, setShowVoicePrompt] = useState(false);
+  const [voiceConfirmationText, setVoiceConfirmationText] = useState(''); // New state for text input confirmation
 
   const { transcript, isListening, startListening, stopListening, browserSupportsSpeechRecognition } = useSpeechRecognition();
 
@@ -27,24 +28,31 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
     const config = loadConfig();
     if (config) {
       setIsConfigured(true);
-      // For simplicity, we're not storing safeword/safecommand in state here,
-      // but passing them directly to onAuthenticated after successful login.
     }
   }, []);
 
   useEffect(() => {
-    if (showVoicePrompt && transcript.toLowerCase().includes("oui, c'est moi") && isListening === false) {
-      const config = loadConfig();
-      if (config) {
-        showSuccess("Authentification vocale réussie ! Bienvenue, Monsieur.");
-        setIsAuthenticated(true);
-        onAuthenticated({ safeword: config.safeword, safecommand: config.safecommand });
+    if (showVoicePrompt) {
+      const spokenConfirmation = transcript.toLowerCase().includes("oui, c'est moi");
+      const typedConfirmation = voiceConfirmationText.toLowerCase() === "oui, c'est moi";
+
+      if ((spokenConfirmation && !isListening) || typedConfirmation) {
+        const config = loadConfig();
+        if (config) {
+          showSuccess("Authentification réussie ! Bienvenue, Monsieur.");
+          setIsAuthenticated(true);
+          onAuthenticated({ safeword: config.safeword, safecommand: config.safecommand });
+        }
+      } else if (transcript && !isListening && !spokenConfirmation) {
+        showError("Réponse vocale incorrecte. Veuillez réessayer.");
+        setShowVoicePrompt(false); // Reset to allow re-attempt
+        setVoiceConfirmationText(''); // Clear text input
+      } else if (voiceConfirmationText && !typedConfirmation) {
+        // Only show error for typed if it's not "oui, c'est moi" and user tried to submit
+        // This case is handled by the submit button now, so this might not be strictly needed here.
       }
-    } else if (showVoicePrompt && transcript && !transcript.toLowerCase().includes("oui, c'est moi") && isListening === false) {
-      showError("Réponse vocale incorrecte. Veuillez réessayer.");
-      setShowVoicePrompt(false); // Reset to allow re-attempt
     }
-  }, [transcript, isListening, showVoicePrompt, onAuthenticated]);
+  }, [transcript, isListening, showVoicePrompt, voiceConfirmationText, onAuthenticated]);
 
   const handleSetup = () => {
     if (password !== confirmPassword) {
@@ -56,7 +64,6 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
       return;
     }
 
-    // In a real app, hash the password securely. For this demo, we store it directly.
     saveConfig({ passwordHash: password, safeword, safecommand });
     setIsConfigured(true);
     showSuccess("Configuration enregistrée avec succès !");
@@ -71,14 +78,12 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
     if (config && config.passwordHash === currentPasswordAttempt) {
       showSuccess("Mot de passe correct. Nina vous salue.");
       setShowVoicePrompt(true);
-      // Start listening for voice confirmation
-      setTimeout(() => { // Give a small delay for the user to be ready
+      setVoiceConfirmationText(''); // Clear any previous text input
+      setTimeout(() => {
         if (browserSupportsSpeechRecognition) {
           startListening();
         } else {
-          showError("Votre navigateur ne supporte pas la reconnaissance vocale. Impossible de confirmer.");
-          // Fallback for no speech recognition, maybe auto-authenticate for demo purposes
-          // For now, we'll just block it.
+          showError("Votre navigateur ne supporte pas la reconnaissance vocale. Veuillez taper 'oui, c'est moi'.");
         }
       }, 1000);
     } else {
@@ -87,8 +92,19 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
     }
   };
 
+  const handleVoiceConfirmationSubmit = () => {
+    if (voiceConfirmationText.toLowerCase() === "oui, c'est moi") {
+      // The useEffect will handle the authentication
+      // We just need to trigger the check by updating state or letting useEffect run
+      // For now, just let useEffect handle it.
+    } else {
+      showError("Réponse textuelle incorrecte. Veuillez taper 'oui, c'est moi'.");
+      setVoiceConfirmationText('');
+    }
+  };
+
   if (isAuthenticated) {
-    return null; // Render nothing, parent component will render VirtualAssistant
+    return null;
   }
 
   return (
@@ -170,11 +186,35 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
               ) : (
                 <div className="text-center">
                   <p className="mb-4 text-lg">"Bonjour, c'est Nina, est-ce bien monsieur?"</p>
-                  <p className="text-sm text-muted-foreground">
-                    {isListening ? "Écoute en cours..." : "Dites 'oui, c'est moi' pour confirmer."}
-                  </p>
+                  <div className="flex w-full items-center space-x-2 mt-4">
+                    <Input
+                      type="text"
+                      placeholder="Tapez 'oui, c'est moi' ou parlez..."
+                      value={isListening ? transcript : voiceConfirmationText}
+                      onChange={(e) => setVoiceConfirmationText(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          handleVoiceConfirmationSubmit();
+                        }
+                      }}
+                      disabled={isListening} // Disable typing while listening
+                    />
+                    <Button type="submit" onClick={handleVoiceConfirmationSubmit} disabled={isListening}>
+                      Confirmer
+                    </Button>
+                  </div>
+                  {browserSupportsSpeechRecognition && (
+                    <p className="text-sm text-muted-foreground mt-2">
+                      {isListening ? "Écoute en cours..." : "Dites 'oui, c'est moi' ou tapez-le."}
+                    </p>
+                  )}
                   {!browserSupportsSpeechRecognition && (
-                    <p className="text-red-500 mt-2">Votre navigateur ne supporte pas la reconnaissance vocale.</p>
+                    <p className="text-red-500 mt-2">Votre navigateur ne supporte pas la reconnaissance vocale. Veuillez taper 'oui, c'est moi'.</p>
+                  )}
+                  {browserSupportsSpeechRecognition && !isListening && (
+                    <p className="text-sm text-yellow-600 mt-2">
+                      Si le micro ne fonctionne pas, assurez-vous d'avoir autorisé l'accès au microphone dans les paramètres de votre navigateur.
+                    </p>
                   )}
                 </div>
               )}
