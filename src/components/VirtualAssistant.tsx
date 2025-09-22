@@ -17,7 +17,7 @@ const VirtualAssistant: React.FC<VirtualAssistantProps> = ({ safeword, safecomma
   const [isNinaActive, setIsNinaActive] = useState<boolean>(false);
   const [textCommand, setTextCommand] = useState<string>('');
   const [isProcessingCommand, setIsProcessingCommand] = useState<boolean>(false);
-  const { transcript, isListening, startListening, stopListening, browserSupportsSpeechRecognition, resetTranscript, isFinal } = useSpeechRecognition();
+  const { transcript, isListening, startListening, stopListening, browserSupportsSpeechRecognition, resetTranscript, isFinal, isSpeechEndedByPause } = useSpeechRecognition();
 
   // Memoize processCommand to prevent unnecessary re-renders and issues with useEffect dependencies
   const processCommand = useCallback((command: string) => {
@@ -115,12 +115,12 @@ const VirtualAssistant: React.FC<VirtualAssistantProps> = ({ safeword, safecomma
         return; // Exit early
       }
 
-      // If Nina is active, listening continuously, and a final utterance is detected
-      if (isNinaActive && isFinal && transcript.trim() !== "") {
-        console.log("Final command detected:", transcript);
+      // If Nina is active, listening continuously, and a final utterance is detected (by API or by pause)
+      if (isNinaActive && (isSpeechEndedByPause || isFinal) && transcript.trim() !== "") {
+        console.log("Command detected (by pause or final):", transcript);
         setIsProcessingCommand(true);
-        processCommand(transcript); // Process the final command
-        resetTranscript(); // Clear transcript after processing
+        processCommand(transcript); // Process the command
+        resetTranscript(); // Clear transcript after processing and reset pause state
         setTextCommand('');
         return; // Exit early
       }
@@ -131,7 +131,7 @@ const VirtualAssistant: React.FC<VirtualAssistantProps> = ({ safeword, safecomma
       // Restart non-continuous listening for activation word
       setTimeout(() => startListening(false), 100);
     }
-  }, [transcript, isListening, isNinaActive, isFinal, startListening, stopListening, resetTranscript, processCommand]);
+  }, [transcript, isListening, isNinaActive, isFinal, isSpeechEndedByPause, startListening, stopListening, resetTranscript, processCommand]);
 
   const toggleListening = () => {
     if (isListening) {
