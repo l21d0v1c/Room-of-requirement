@@ -97,12 +97,27 @@ const useSpeechRecognition = (): SpeechRecognitionHook => {
       console.log("Speech recognition ended.");
       setIsListening(false);
       setIsFinal(false);
-      // Clear timeout on end to prevent late state updates
       if (speechTimeoutRef.current) {
         clearTimeout(speechTimeoutRef.current);
         speechTimeoutRef.current = null;
       }
       setIsSpeechEndedByPause(false); // Reset pause state on end
+
+      // Automatically restart if continuous mode was active
+      if (recognitionRef.current?.continuous) {
+        console.log("Continuous mode was active, attempting to restart speech recognition...");
+        setTimeout(() => {
+          if (recognitionRef.current) { // Ensure ref is still valid
+            try {
+              recognitionRef.current.start();
+              console.log("Speech recognition restarted automatically.");
+            } catch (e) {
+              console.error("Error restarting speech recognition automatically:", e);
+              showError("Impossible de redémarrer la reconnaissance vocale automatiquement.");
+            }
+          }
+        }, 100); // Small delay
+      }
     };
 
     recognitionRef.current.onerror = (event: SpeechRecognitionErrorEvent) => {
@@ -115,6 +130,21 @@ const useSpeechRecognition = (): SpeechRecognitionHook => {
       }
       setIsSpeechEndedByPause(false); // Reset pause state on error
       showError(`Erreur de reconnaissance vocale: ${event.error}. Vérifiez les permissions du microphone.`);
+      // If an error occurs, and we were in continuous mode, try to restart
+      if (recognitionRef.current?.continuous) {
+        console.log("Error in continuous mode, attempting to restart speech recognition...");
+        setTimeout(() => {
+          if (recognitionRef.current) {
+            try {
+              recognitionRef.current.start();
+              console.log("Speech recognition restarted automatically after error.");
+            } catch (e) {
+              console.error("Error restarting speech recognition automatically after error:", e);
+              showError("Impossible de redémarrer la reconnaissance vocale automatiquement après une erreur.");
+            }
+          }
+        }, 500); // Longer delay after error
+      }
     };
 
     return () => {

@@ -62,7 +62,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
         if (config) {
           showSuccess("Authentification réussie ! Bienvenue, Monsieur.");
           setIsAuthenticated(true);
-          onAuthenticated({ safeword: config.safeword, safecommand: config.safecommand });
+          onAuthenticated({ safeword: config.safeword, safecommand: config.safecommand }); // Correction ici
         }
       } else if (transcript && !isListening && !spokenMatch) {
         showError("Réponse vocale incorrecte. Veuillez réessayer.");
