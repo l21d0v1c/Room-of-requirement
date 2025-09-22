@@ -26,7 +26,7 @@ const useSpeechRecognition = (): SpeechRecognitionHook => {
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     recognitionRef.current = new SpeechRecognition();
-    recognitionRef.current.interimResults = true; // Important pour obtenir des résultats intermédiaires
+    recognitionRef.current.interimResults = true; // IMPORTANT : Réactivé pour une détection en temps réel
     recognitionRef.current.lang = 'fr-FR'; // Set language to French
 
     recognitionRef.current.onstart = () => {
