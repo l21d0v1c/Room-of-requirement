@@ -17,7 +17,7 @@ const VirtualAssistant: React.FC<VirtualAssistantProps> = ({ safeword, safecomma
   const [isNinaActive, setIsNinaActive] = useState<boolean>(false);
   const [textCommand, setTextCommand] = useState<string>('');
   const [isProcessingCommand, setIsProcessingCommand] = useState<boolean>(false);
-  const { transcript, isListening, startListening, stopListening, browserSupportsSpeechRecognition } = useSpeechRecognition();
+  const { transcript, isListening, startListening, stopListening, browserSupportsSpeechRecognition, resetTranscript, isFinal } = useSpeechRecognition();
 
   // Memoize processCommand to prevent unnecessary re-renders and issues with useEffect dependencies
   const processCommand = useCallback((command: string) => {
@@ -35,86 +35,103 @@ const VirtualAssistant: React.FC<VirtualAssistantProps> = ({ safeword, safecomma
     }
 
     // Process general commands when Nina is active
-    if (isNinaActive) {
-      if (lowerCommand.startsWith("va sur ")) {
-        const url = lowerCommand.replace("va sur ", "").trim();
-        if (url) {
-          const fullUrl = url.startsWith('http') ? url : `https://${url}`;
-          window.open(fullUrl, '_blank');
-          response = `J'ouvre ${url} pour vous, monsieur.`;
-          showSuccess(response);
-        }
-      } else if (lowerCommand.startsWith("cherche ")) {
-        const query = lowerCommand.replace("cherche ", "").trim();
-        if (query) {
-          window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank');
-          response = `Je recherche "${query}" pour vous, monsieur.`;
-          showSuccess(response);
-        }
-      } else if (lowerCommand.includes("mot de passe")) {
-        response = "Veuillez taper votre mot de passe monsieur.";
-        showSuccess(response);
-      } else if (lowerCommand.includes("scroll down") || lowerCommand.includes("descendre")) {
-        window.scrollBy({ top: window.innerHeight / 2, behavior: 'smooth' });
-        response = "Je fais défiler la page vers le bas, monsieur.";
-        showSuccess(response);
-      } else if (lowerCommand.includes("scroll up") || lowerCommand.includes("remonter")) {
-        window.scrollBy({ top: -window.innerHeight / 2, behavior: 'smooth' });
-        response = "Je fais défiler la page vers le haut, monsieur.";
+    if (lowerCommand.startsWith("va sur ")) {
+      const url = lowerCommand.replace("va sur ", "").trim();
+      if (url) {
+        const fullUrl = url.startsWith('http') ? url : `https://${url}`;
+        window.open(fullUrl, '_blank');
+        response = `J'ouvre ${url} pour vous, monsieur.`;
         showSuccess(response);
       }
-      // Add more simulated web actions here
-    } else {
-      response = "Veuillez dire 'Nina' pour m'activer, monsieur.";
+    } else if (lowerCommand.startsWith("cherche ")) {
+      const query = lowerCommand.replace("cherche ", "").trim();
+      if (query) {
+        window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank');
+        response = `Je recherche "${query}" pour vous, monsieur.`;
+        showSuccess(response);
+      }
+    } else if (lowerCommand.includes("mot de passe")) {
+      response = "Veuillez taper votre mot de passe monsieur.";
+      showSuccess(response);
+    } else if (lowerCommand.includes("scroll down") || lowerCommand.includes("descendre")) {
+      window.scrollBy({ top: window.innerHeight / 2, behavior: 'smooth' });
+      response = "Je fais défiler la page vers le bas, monsieur.";
+      showSuccess(response);
+    } else if (lowerCommand.includes("scroll up") || lowerCommand.includes("remonter")) {
+      window.scrollBy({ top: -window.innerHeight / 2, behavior: 'smooth' });
+      response = "Je fais défiler la page vers le haut, monsieur.";
+      showSuccess(response);
     }
+    // Add more simulated web actions here
 
     setNinaResponse(response);
     setIsProcessingCommand(false);
-    // Always restart listening continuously after processing a command if Nina is active
-    if (isNinaActive) {
-      startListening(true); // Redémarre en mode continu
-    }
-  }, [safeword, safecommand, onShutdown, isNinaActive, startListening]);
+    // After processing a command, ensure continuous listening is restarted
+    startListening(true); // Redémarre en mode continu
+  }, [safeword, safecommand, onShutdown, startListening]);
 
+  // Effect for initial listening and cleanup
   useEffect(() => {
     if (!browserSupportsSpeechRecognition) {
       showError("Votre navigateur ne supporte pas la reconnaissance vocale. Nina ne pourra pas écouter vos commandes.");
     } else if (!isListening && !isNinaActive) {
-      // Tente de démarrer l'écoute pour le mot d'activation "Nina" en mode non continu
+      // Attempt to start listening for activation word "Nina" in non-continuous mode
       startListening(false);
     }
-    // Fonction de nettoyage pour arrêter l'écoute lorsque le composant est démonté
     return () => {
       stopListening();
     };
   }, [browserSupportsSpeechRecognition, isListening, isNinaActive, startListening, stopListening]);
 
+  // Effect for processing transcript changes
   useEffect(() => {
     if (isListening) {
-      setTextCommand(transcript);
-      setIsProcessingCommand(false);
-    } else if (transcript) { // L'écoute s'est arrêtée, et il y a une transcription
-      console.log("Transcript:", transcript);
-      setIsProcessingCommand(true);
+      setTextCommand(transcript); // Always update input with current transcript
+
       const lowerTranscript = transcript.toLowerCase();
 
-      if (!isNinaActive) {
-        if (lowerTranscript.includes("nina")) {
-          setIsNinaActive(true);
-          setNinaResponse("Nina activée. Que puis-je faire pour vous, monsieur ?");
-          showSuccess("Nina activée !");
-          startListening(true); // Redémarre l'écoute en mode continu pour les commandes
-        } else {
-          setNinaResponse("Veuillez dire 'Nina' pour m'activer, monsieur.");
-          startListening(false); // Continue d'écouter pour l'activation en mode non continu
-        }
-      } else {
-        // Nina est active, traite la commande
-        processCommand(transcript);
+      // Handle "clear" command immediately if Nina is active and listening
+      if (isNinaActive && lowerTranscript.includes("clear")) {
+        stopListening(); // Stop current listening
+        resetTranscript(); // Clear the transcript
+        setTextCommand(''); // Clear the input field
+        setNinaResponse("J'ai effacé la mémoire. Dites votre prochaine commande, monsieur.");
+        showSuccess("Mémoire effacée.");
+        setIsProcessingCommand(false);
+        // Restart listening continuously after a short delay
+        setTimeout(() => startListening(true), 100);
+        return; // Exit early
       }
+
+      // If Nina is not active, check for activation word "Nina"
+      if (!isNinaActive && lowerTranscript.includes("nina")) {
+        setIsNinaActive(true);
+        setNinaResponse("Nina activée. Que puis-je faire pour vous, monsieur ?");
+        showSuccess("Nina activée !");
+        stopListening(); // Stop current non-continuous listening
+        resetTranscript(); // Clear transcript after activation
+        setTextCommand('');
+        setTimeout(() => startListening(true), 100); // Start continuous listening for commands
+        return; // Exit early
+      }
+
+      // If Nina is active, listening continuously, and a final utterance is detected
+      if (isNinaActive && isFinal && transcript.trim() !== "") {
+        console.log("Final command detected:", transcript);
+        setIsProcessingCommand(true);
+        processCommand(transcript); // Process the final command
+        resetTranscript(); // Clear transcript after processing
+        setTextCommand('');
+        return; // Exit early
+      }
+
+    } else if (transcript && !isNinaActive) { // Listening stopped, transcript, but Nina not active (e.g., initial non-continuous listen)
+      setNinaResponse("Veuillez dire 'Nina' pour m'activer, monsieur.");
       setTextCommand('');
+      // Restart non-continuous listening for activation word
+      setTimeout(() => startListening(false), 100);
     }
-  }, [transcript, isListening, isNinaActive, startListening, processCommand]);
+  }, [transcript, isListening, isNinaActive, isFinal, startListening, stopListening, resetTranscript, processCommand]);
 
   const toggleListening = () => {
     if (isListening) {
