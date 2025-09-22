@@ -14,12 +14,12 @@ interface VirtualAssistantProps {
 
 const VirtualAssistant: React.FC<VirtualAssistantProps> = ({ safeword, safecommand, onShutdown }) => {
   const [ninaResponse, setNinaResponse] = useState<string>("Dites 'Nina' ou cliquez sur le micro pour m'activer.");
-  const [isNinaActive, setIsNinaActive] = useState<boolean>(false); // Nina starts inactive
+  const [isNinaActive, setIsNinaActive] = useState<boolean>(false);
   const [textCommand, setTextCommand] = useState<string>('');
   const [isProcessingCommand, setIsProcessingCommand] = useState<boolean>(false);
   const { transcript, isListening, startListening, stopListening, browserSupportsSpeechRecognition } = useSpeechRecognition();
 
-  // Wrap processCommand in useCallback to make it stable for useEffect dependencies
+  // Memoize processCommand to prevent unnecessary re-renders and issues with useEffect dependencies
   const processCommand = useCallback((command: string) => {
     const lowerCommand = command.toLowerCase();
     let response = "Je n'ai pas compris cette action, monsieur.";
@@ -35,46 +35,61 @@ const VirtualAssistant: React.FC<VirtualAssistantProps> = ({ safeword, safecomma
     }
 
     // Process general commands when Nina is active
-    if (lowerCommand.startsWith("va sur ")) {
-      const url = lowerCommand.replace("va sur ", "").trim();
-      if (url) {
-        const fullUrl = url.startsWith('http') ? url : `https://${url}`;
-        window.open(fullUrl, '_blank');
-        response = `J'ouvre ${url} pour vous, monsieur.`;
+    if (isNinaActive) {
+      if (lowerCommand.startsWith("va sur ")) {
+        const url = lowerCommand.replace("va sur ", "").trim();
+        if (url) {
+          const fullUrl = url.startsWith('http') ? url : `https://${url}`;
+          window.open(fullUrl, '_blank');
+          response = `J'ouvre ${url} pour vous, monsieur.`;
+          showSuccess(response);
+        }
+      } else if (lowerCommand.startsWith("cherche ")) {
+        const query = lowerCommand.replace("cherche ", "").trim();
+        if (query) {
+          window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank');
+          response = `Je recherche "${query}" pour vous, monsieur.`;
+          showSuccess(response);
+        }
+      } else if (lowerCommand.includes("mot de passe")) {
+        response = "Veuillez taper votre mot de passe monsieur.";
+        showSuccess(response);
+      } else if (lowerCommand.includes("scroll down") || lowerCommand.includes("descendre")) {
+        window.scrollBy({ top: window.innerHeight / 2, behavior: 'smooth' });
+        response = "Je fais défiler la page vers le bas, monsieur.";
+        showSuccess(response);
+      } else if (lowerCommand.includes("scroll up") || lowerCommand.includes("remonter")) {
+        window.scrollBy({ top: -window.innerHeight / 2, behavior: 'smooth' });
+        response = "Je fais défiler la page vers le haut, monsieur.";
         showSuccess(response);
       }
-    } else if (lowerCommand.startsWith("cherche ")) {
-      const query = lowerCommand.replace("cherche ", "").trim();
-      if (query) {
-        window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank');
-        response = `Je recherche "${query}" pour vous, monsieur.`;
-        showSuccess(response);
-      }
-    } else if (lowerCommand.includes("mot de passe")) {
-      response = "Veuillez taper votre mot de passe monsieur.";
-      showSuccess(response);
-    } else if (lowerCommand.includes("scroll down") || lowerCommand.includes("descendre")) {
-      window.scrollBy({ top: window.innerHeight / 2, behavior: 'smooth' });
-      response = "Je fais défiler la page vers le bas, monsieur.";
-      showSuccess(response);
-    } else if (lowerCommand.includes("scroll up") || lowerCommand.includes("remonter")) {
-      window.scrollBy({ top: -window.innerHeight / 2, behavior: 'smooth' });
-      response = "Je fais défiler la page vers le haut, monsieur.";
-      showSuccess(response);
+      // Add more simulated web actions here
+    } else {
+      response = "Veuillez dire 'Nina' pour m'activer, monsieur.";
     }
-    // Add more simulated web actions here
 
     setNinaResponse(response);
     setIsProcessingCommand(false);
-    startListening(); // Always restart listening after processing a command
-  }, [safeword, safecommand, onShutdown, startListening]);
+    // Always restart listening after processing a command if Nina is active
+    // This ensures continuous listening for subsequent commands
+    if (isNinaActive) {
+      startListening();
+    }
+  }, [safeword, safecommand, onShutdown, isNinaActive, startListening]);
 
   useEffect(() => {
     if (!browserSupportsSpeechRecognition) {
       showError("Votre navigateur ne supporte pas la reconnaissance vocale. Nina ne pourra pas écouter vos commandes.");
+    } else {
+      // Attempt to start listening immediately for the activation word "Nina"
+      // This is the "no-click" attempt. Browser might block it, but we try.
+      startListening();
     }
-    // No automatic startListening here, Nina waits for explicit activation
-  }, [browserSupportsSpeechRecognition]);
+    // Cleanup function to stop listening when component unmounts
+    return () => {
+      stopListening();
+    };
+  }, [browserSupportsSpeechRecognition, startListening, stopListening]); // Dependencies for initial listening
 
   useEffect(() => {
     if (isListening) {
@@ -106,6 +121,7 @@ const VirtualAssistant: React.FC<VirtualAssistantProps> = ({ safeword, safecomma
   const toggleListening = () => {
     if (isListening) {
       stopListening();
+      setNinaResponse(isNinaActive ? "J'ai arrêté d'écouter, monsieur." : "Dites 'Nina' ou cliquez sur le micro pour m'activer.");
     } else {
       startListening();
       setIsNinaActive(true); // Explicitly activate Nina when mic button is clicked
@@ -123,7 +139,8 @@ const VirtualAssistant: React.FC<VirtualAssistantProps> = ({ safeword, safecomma
           setIsNinaActive(true);
           setNinaResponse("Nina activée. Que puis-je faire pour vous, monsieur ?");
           showSuccess("Nina activée !");
-          startListening(); // Start listening for voice commands after text activation
+          // No need to start voice listening here, as it's a text command.
+          // If user wants voice, they'll click the mic.
         } else {
           setNinaResponse("Veuillez dire 'Nina' ou taper 'Nina' pour m'activer, monsieur.");
           setIsProcessingCommand(false); // Stop processing if not activated
