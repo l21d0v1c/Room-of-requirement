@@ -4,7 +4,7 @@ import { showError } from '@/utils/toast'; // Import showError for user feedback
 interface SpeechRecognitionHook {
   transcript: string;
   isListening: boolean;
-  startListening: () => void;
+  startListening: (continuous?: boolean) => void; // Ajout de l'option 'continuous'
   stopListening: () => void;
   browserSupportsSpeechRecognition: boolean;
 }
@@ -23,7 +23,7 @@ const useSpeechRecognition = (): SpeechRecognitionHook => {
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     recognitionRef.current = new SpeechRecognition();
-    recognitionRef.current.continuous = false; // Listen for a single phrase
+    // recognitionRef.current.continuous sera défini par startListening
     recognitionRef.current.interimResults = false;
     recognitionRef.current.lang = 'fr-FR'; // Set language to French
 
@@ -58,9 +58,10 @@ const useSpeechRecognition = (): SpeechRecognitionHook => {
     };
   }, [browserSupportsSpeechRecognition]);
 
-  const startListening = () => {
+  const startListening = (continuousMode: boolean = false) => { // Par défaut, non continu
     if (recognitionRef.current && !isListening) {
       setTranscript(''); // Clear previous transcript
+      recognitionRef.current.continuous = continuousMode; // Définir le mode continu ici
       try {
         recognitionRef.current.start();
         console.log("Attempting to start speech recognition...");

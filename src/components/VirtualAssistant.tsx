@@ -70,32 +70,30 @@ const VirtualAssistant: React.FC<VirtualAssistantProps> = ({ safeword, safecomma
 
     setNinaResponse(response);
     setIsProcessingCommand(false);
-    // Always restart listening after processing a command if Nina is active
-    // This ensures continuous listening for subsequent commands
+    // Always restart listening continuously after processing a command if Nina is active
     if (isNinaActive) {
-      startListening();
+      startListening(true); // Redémarre en mode continu
     }
   }, [safeword, safecommand, onShutdown, isNinaActive, startListening]);
 
   useEffect(() => {
     if (!browserSupportsSpeechRecognition) {
       showError("Votre navigateur ne supporte pas la reconnaissance vocale. Nina ne pourra pas écouter vos commandes.");
-    } else {
-      // Attempt to start listening immediately for the activation word "Nina"
-      // This is the "no-click" attempt. Browser might block it, but we try.
-      startListening();
+    } else if (!isListening && !isNinaActive) {
+      // Tente de démarrer l'écoute pour le mot d'activation "Nina" en mode non continu
+      startListening(false);
     }
-    // Cleanup function to stop listening when component unmounts
+    // Fonction de nettoyage pour arrêter l'écoute lorsque le composant est démonté
     return () => {
       stopListening();
     };
-  }, [browserSupportsSpeechRecognition, startListening, stopListening]); // Dependencies for initial listening
+  }, [browserSupportsSpeechRecognition, isListening, isNinaActive, startListening, stopListening]);
 
   useEffect(() => {
     if (isListening) {
       setTextCommand(transcript);
       setIsProcessingCommand(false);
-    } else if (transcript) { // Listening stopped, and there's a transcript
+    } else if (transcript) { // L'écoute s'est arrêtée, et il y a une transcription
       console.log("Transcript:", transcript);
       setIsProcessingCommand(true);
       const lowerTranscript = transcript.toLowerCase();
@@ -105,13 +103,13 @@ const VirtualAssistant: React.FC<VirtualAssistantProps> = ({ safeword, safecomma
           setIsNinaActive(true);
           setNinaResponse("Nina activée. Que puis-je faire pour vous, monsieur ?");
           showSuccess("Nina activée !");
-          startListening(); // Restart listening for actual commands
+          startListening(true); // Redémarre l'écoute en mode continu pour les commandes
         } else {
           setNinaResponse("Veuillez dire 'Nina' pour m'activer, monsieur.");
-          startListening(); // Keep listening for activation
+          startListening(false); // Continue d'écouter pour l'activation en mode non continu
         }
       } else {
-        // Nina is active, process the command
+        // Nina est active, traite la commande
         processCommand(transcript);
       }
       setTextCommand('');
@@ -123,8 +121,8 @@ const VirtualAssistant: React.FC<VirtualAssistantProps> = ({ safeword, safecomma
       stopListening();
       setNinaResponse(isNinaActive ? "J'ai arrêté d'écouter, monsieur." : "Dites 'Nina' ou cliquez sur le micro pour m'activer.");
     } else {
-      startListening();
-      setIsNinaActive(true); // Explicitly activate Nina when mic button is clicked
+      startListening(true); // Le clic manuel démarre toujours l'écoute continue
+      setIsNinaActive(true); // Active explicitement Nina lorsque le bouton du micro est cliqué
       setNinaResponse("J'écoute, monsieur...");
     }
   };
@@ -139,11 +137,11 @@ const VirtualAssistant: React.FC<VirtualAssistantProps> = ({ safeword, safecomma
           setIsNinaActive(true);
           setNinaResponse("Nina activée. Que puis-je faire pour vous, monsieur ?");
           showSuccess("Nina activée !");
-          // No need to start voice listening here, as it's a text command.
-          // If user wants voice, they'll click the mic.
+          // Si activé par texte, nous devrions toujours démarrer l'écoute vocale en continu
+          startListening(true); 
         } else {
           setNinaResponse("Veuillez dire 'Nina' ou taper 'Nina' pour m'activer, monsieur.");
-          setIsProcessingCommand(false); // Stop processing if not activated
+          setIsProcessingCommand(false); // Arrête le traitement si non activé
         }
       } else {
         processCommand(textCommand);
