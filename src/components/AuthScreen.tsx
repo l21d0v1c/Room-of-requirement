@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -28,6 +28,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
   const [voiceConfirmationText, setVoiceConfirmationText] = useState('');
 
   const { transcript, isListening, startListening, stopListening, browserSupportsSpeechRecognition } = useSpeechRecognition();
+  const confirmationInputRef = useRef<HTMLInputElement>(null); // Ref for the input field
 
   const expectedConfirmation = "oui, c'est moi";
   const normalizedExpectedConfirmation = normalizeText(expectedConfirmation);
@@ -38,6 +39,13 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
       setIsConfigured(true);
     }
   }, []);
+
+  useEffect(() => {
+    if (showVoicePrompt && !isListening && confirmationInputRef.current) {
+      // Automatically focus the input when the voice prompt appears and not listening
+      confirmationInputRef.current.focus();
+    }
+  }, [showVoicePrompt, isListening]); // Depend on showVoicePrompt and isListening
 
   useEffect(() => {
     if (showVoicePrompt) {
@@ -197,6 +205,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
                   <p className="mb-4 text-lg">"Bonjour, c'est Nina, est-ce bien monsieur?"</p>
                   <div className="flex w-full items-center space-x-2 mt-4">
                     <Input
+                      ref={confirmationInputRef} {/* Attach the ref here */}
                       type="text"
                       placeholder={`Tapez '${expectedConfirmation}' ou parlez...`}
                       value={isListening ? transcript : voiceConfirmationText}
