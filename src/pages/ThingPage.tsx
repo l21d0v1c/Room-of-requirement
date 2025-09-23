@@ -15,36 +15,39 @@ const ThingPage = () => {
   const [file, setFile] = useState<File | null>(null);
   const [magicWord, setMagicWord] = useState('');
   const [isExistingThing, setIsExistingThing] = useState(false);
-  const [showMagicWordInput, setShowMagicWordInput] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    console.log(`ThingPage: useEffect triggered for thingName: "${thingName}"`);
     if (!thingName) {
+      console.log("ThingPage: thingName is empty, navigating to /");
       navigate('/');
       return;
     }
+    
     // Reset file state when thingName changes to ensure clean slate for new/existing thing logic
     setFile(null); 
+    setMagicWord(''); // Also reset magic word input
 
     const exists = thingExists(thingName);
+    console.log(`ThingPage: thingExists("${thingName}") returned: ${exists}`);
     setIsExistingThing(exists);
-    if (exists) {
-      setShowMagicWordInput(true); // If thing exists, go straight to magic word
-    }
   }, [thingName, navigate]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
+      console.log("ThingPage: File selected:", event.target.files[0].name);
       setFile(event.target.files[0]);
-      setShowMagicWordInput(true);
     }
   };
 
   const handleLoadThingClick = () => {
+    console.log("ThingPage: 'Charger un objet' button clicked.");
     fileInputRef.current?.click();
   };
 
   const handleEvoke = async () => {
+    console.log("ThingPage: 'Evoke' button clicked.");
     if (!thingName) {
       showError("Nom de l'objet manquant.");
       navigate('/');
@@ -56,7 +59,7 @@ const ThingPage = () => {
     }
 
     if (isExistingThing) {
-      // User is trying to evoke an existing thing
+      console.log(`ThingPage: Attempting to evoke existing thing "${thingName}"`);
       const storedThing = loadThing(thingName);
       if (!storedThing) {
         showError("L'objet n'existe plus ou a expiré.");
@@ -96,7 +99,7 @@ const ThingPage = () => {
         navigate('/');
       }
     } else {
-      // User is trying to save a new thing
+      console.log(`ThingPage: Attempting to save new thing "${thingName}"`);
       if (!file) {
         showError("Veuillez télécharger un fichier.");
         navigate('/');
@@ -135,6 +138,7 @@ const ThingPage = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
+          {/* Condition pour afficher le bouton 'Charger un objet' */}
           {!isExistingThing && !file && (
             <>
               <input
@@ -149,7 +153,8 @@ const ThingPage = () => {
             </>
           )}
 
-          {(file || isExistingThing || showMagicWordInput) && (
+          {/* Condition pour afficher le champ 'Mot magique' et le bouton 'Évoquer' */}
+          {(isExistingThing || file) && (
             <>
               <div className="grid gap-2">
                 <Label htmlFor="magic-word">Mot magique (Magic Word)</Label>
