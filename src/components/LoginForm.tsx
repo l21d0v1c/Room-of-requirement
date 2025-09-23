@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { showSuccess, showError } from "@/utils/toast";
 
 const formSchema = z.object({
+  username: z.string().min(1, { message: "Le nom d'utilisateur est requis." }),
   password: z.string().min(1, { message: "Le mot de passe est requis." }),
 });
 
@@ -26,18 +27,19 @@ const LoginForm = () => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      username: "",
       password: "",
     },
   });
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    // For simplicity, a hardcoded password "dyad"
-    if (values.password === "dyad") {
+    // For simplicity, hardcoded username "harry" and password "dyad"
+    if (values.username === "harry" && values.password === "dyad") {
       setIsLoggedIn(true);
       showSuccess("Connexion réussie ! Bienvenue dans la Room of Requirement.");
     } else {
       setIsLoggedIn(false);
-      showError("Mot de passe incorrect. Veuillez réessayer.");
+      showError("Nom d'utilisateur ou mot de passe incorrect. Veuillez réessayer.");
     }
   };
 
@@ -53,6 +55,19 @@ const LoginForm = () => {
     <div className="mt-8 w-full max-w-sm">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <FormField
+            control={form.control}
+            name="username"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-gray-700 dark:text-gray-200">Nom d'utilisateur</FormLabel>
+                <FormControl>
+                  <Input placeholder="Entrez votre nom d'utilisateur" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           <FormField
             control={form.control}
             name="password"
