@@ -10,52 +10,57 @@ interface ThingData {
 
 const ROOM_STORAGE_KEY = 'room_of_requirement_things';
 
+// Helper to get all things from localStorage, filtering out expired ones
 const getThings = (): Record<string, ThingData> => {
   let things: Record<string, ThingData> = {};
   try {
     const thingsString = localStorage.getItem(ROOM_STORAGE_KEY);
-    console.log("roomStorage: Raw thingsString from localStorage:", thingsString);
     if (thingsString) {
       things = JSON.parse(thingsString);
-      console.log("roomStorage: Parsed things from localStorage:", things);
     }
   } catch (error) {
-    console.error("roomStorage: Error parsing things from localStorage", error);
+    console.error("Error parsing things from localStorage:", error);
     showError("Erreur lors du chargement des objets.");
-    things = {}; 
+    return {}; // Return empty object on error
   }
   
   const now = Date.now();
   const activeThings: Record<string, ThingData> = {};
+  let changed = false;
+
   for (const key in things) {
-    if (things[key] && typeof things[key].deleteAt === 'number' && things[key].deleteAt > now) {
-      activeThings[key] = things[key];
+    const thing = things[key];
+    // Validate structure and check expiration
+    if (thing && typeof thing.deleteAt === 'number' && thing.deleteAt > now) {
+      activeThings[key] = thing;
     } else {
-      if (things[key] && typeof things[key].deleteAt === 'number') {
-        console.log(`roomStorage: Thing '${key}' expired (deleteAt: ${new Date(things[key].deleteAt).toLocaleString()}) and removed.`);
-      } else {
-        console.warn(`roomStorage: Thing '${key}' found in storage but malformed or missing deleteAt. Removing.`);
-      }
+      // If expired or malformed, mark for removal
+      changed = true;
     }
   }
-  console.log("roomStorage: Active things after filtering:", activeThings);
-  saveThings(activeThings); 
+
+  // Only save if changes were made (expired items removed)
+  if (changed) {
+    saveThings(activeThings);
+  }
   return activeThings;
 };
 
+// Helper to save all things to localStorage
 const saveThings = (things: Record<string, ThingData>) => {
   try {
     localStorage.setItem(ROOM_STORAGE_KEY, JSON.stringify(things));
-    console.log("roomStorage: Saved things to localStorage:", things);
   } catch (error) {
-    console.error("roomStorage: Error saving things to localStorage", error);
+    console.error("Error saving things to localStorage:", error);
     showError("Erreur lors de la sauvegarde des objets.");
   }
 };
 
+// Public function to save a new thing
 export const saveThing = (name: string, fileContent: string, magicWord: string): boolean => {
   const things = getThings();
   const normalizedName = name.toLowerCase();
+
   if (things[normalizedName]) {
     showError("Un objet avec ce nom existe déjà.");
     return false;
@@ -67,39 +72,29 @@ export const saveThing = (name: string, fileContent: string, magicWord: string):
     fileContent,
     magicWord,
     createdAt: now,
-    deleteAt: Infinity, 
+    deleteAt: Infinity, // Initially, no deletion scheduled until downloaded
   };
   things[normalizedName] = newThing;
   saveThings(things);
-  console.log(`roomStorage: Thing '${name}' saved with deleteAt: Infinity`);
   return true;
 };
 
+// Public function to load a thing
 export const loadThing = (name: string): ThingData | null => {
   const things = getThings();
   const normalizedName = name.toLowerCase();
   const thing = things[normalizedName];
 
   if (thing && thing.deleteAt <= Date.now()) {
-    console.log(`roomStorage: Thing '${name}' found but expired during load. Deleting.`);
+    // If found but expired, delete it and return null
     delete things[normalizedName];
     saveThings(things);
     return null;
   }
-  console.log(`roomStorage: Loaded thing '${name}':`, thing);
   return thing || null;
 };
 
-export const deleteThing = (name: string) => {
-  const things = getThings();
-  const normalizedName = name.toLowerCase();
-  if (things[normalizedName]) {
-    delete things[normalizedName];
-    saveThings(things);
-    console.log(`roomStorage: Thing '${name}' deleted.`);
-  }
-};
-
+// Public function to schedule deletion for a thing
 export const scheduleThingDeletion = (name: string, days: number) => {
   const things = getThings();
   const normalizedName = name.toLowerCase();
@@ -107,14 +102,12 @@ export const scheduleThingDeletion = (name: string, days: number) => {
     const deleteTimestamp = Date.now() + days * 24 * 60 * 60 * 1000; // days in milliseconds
     things[normalizedName].deleteAt = deleteTimestamp;
     saveThings(things);
-    console.log(`roomStorage: Thing '${name}' scheduled for deletion at: ${new Date(deleteTimestamp).toLocaleString()}`);
   }
 };
 
+// Public function to check if a thing exists and is not expired
 export const thingExists = (name: string): boolean => {
   const things = getThings();
   const normalizedName = name.toLowerCase();
-  const exists = !!things[normalizedName];
-  console.log(`roomStorage: Checking existence for '${name}' (normalized: '${normalizedName}'). Exists: ${exists}`);
-  return exists;
+  return !!things[normalizedName]; // getThings already filters expired items
 };

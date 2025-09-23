@@ -18,41 +18,31 @@ const ThingPage = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    console.log(`ThingPage: useEffect triggered for thingName: "${thingName}"`);
     if (!thingName) {
-      console.log("ThingPage: thingName is empty, navigating to /");
       navigate('/');
       return;
     }
     
+    // Reset state when thingName changes
     setFile(null); 
     setMagicWord(''); 
 
+    // Check if the thing already exists
     const exists = thingExists(thingName);
-    console.log(`ThingPage: thingExists("${thingName}") returned: ${exists}`);
     setIsExistingThing(exists);
   }, [thingName, navigate]);
 
-  // Log the state for debugging rendering
-  useEffect(() => {
-    console.log(`ThingPage: Current state - isExistingThing: ${isExistingThing}, file: ${!!file}`);
-  }, [isExistingThing, file]);
-
-
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
-      console.log("ThingPage: File selected:", event.target.files[0].name);
       setFile(event.target.files[0]);
     }
   };
 
   const handleLoadThingClick = () => {
-    console.log("ThingPage: 'Charger un objet' button clicked.");
     fileInputRef.current?.click();
   };
 
   const handleEvoke = async () => {
-    console.log("ThingPage: 'Evoke' button clicked.");
     if (!thingName) {
       showError("Nom de l'objet manquant.");
       navigate('/');
@@ -64,7 +54,7 @@ const ThingPage = () => {
     }
 
     if (isExistingThing) {
-      console.log(`ThingPage: Attempting to evoke existing thing "${thingName}"`);
+      // User is trying to evoke an existing thing
       const storedThing = loadThing(thingName);
       if (!storedThing) {
         showError("L'objet n'existe plus ou a expiré.");
@@ -75,6 +65,7 @@ const ThingPage = () => {
       if (storedThing.magicWord === magicWord.trim()) {
         showSuccess("Mot magique correct ! Téléchargement de l'objet...");
         
+        // Trigger file download
         const byteCharacters = atob(storedThing.fileContent);
         const byteNumbers = new Array(byteCharacters.length);
         for (let i = 0; i < byteCharacters.length; i++) {
@@ -102,22 +93,22 @@ const ThingPage = () => {
         navigate('/');
       }
     } else {
-      console.log(`ThingPage: Attempting to save new thing "${thingName}"`);
+      // User is trying to save a new thing
       if (!file) {
         showError("Veuillez télécharger un fichier.");
-        navigate('/');
-        return;
+        return; // Don't navigate away, let them select a file
       }
 
       const reader = new FileReader();
       reader.onload = (e) => {
         const fileContent = e.target?.result as string;
-        const base64Content = fileContent.split(',')[1];
+        const base64Content = fileContent.split(',')[1]; // Get base64 part
 
         if (saveThing(thingName, base64Content, magicWord.trim())) {
           showSuccess("Objet enregistré avec succès !");
           navigate('/');
         } else {
+          // Error message already shown by saveThing if name exists
           navigate('/');
         }
       };
@@ -139,7 +130,7 @@ const ThingPage = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
-          {/* Condition pour afficher le bouton 'Charger un objet' */}
+          {/* Show file upload only if it's a new thing and no file is selected yet */}
           {!isExistingThing && !file && (
             <>
               <input
@@ -154,7 +145,7 @@ const ThingPage = () => {
             </>
           )}
 
-          {/* Condition pour afficher le champ 'Mot magique' et le bouton 'Évoquer' */}
+          {/* Show magic word input and evoke button if it's an existing thing OR a new thing with a file selected */}
           {(isExistingThing || file) && (
             <>
               <div className="grid gap-2">
