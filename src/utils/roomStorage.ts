@@ -11,28 +11,39 @@ interface ThingData {
 const ROOM_STORAGE_KEY = 'room_of_requirement_things';
 
 const getThings = (): Record<string, ThingData> => {
+  let things: Record<string, ThingData> = {};
   try {
     const thingsString = localStorage.getItem(ROOM_STORAGE_KEY);
-    const things: Record<string, ThingData> = thingsString ? JSON.parse(thingsString) : {};
-    
-    // Filter out expired things
-    const now = Date.now();
-    const activeThings: Record<string, ThingData> = {};
-    for (const key in things) {
-      if (things[key].deleteAt > now) {
-        activeThings[key] = things[key];
-      } else {
+    if (thingsString) {
+      things = JSON.parse(thingsString);
+    }
+  } catch (error) {
+    console.error("Error parsing things from localStorage", error);
+    showError("Erreur lors du chargement des objets.");
+    // If parsing fails, we start with an empty object to prevent further errors
+    things = {}; 
+  }
+  
+  // Filter out expired things
+  const now = Date.now();
+  const activeThings: Record<string, ThingData> = {};
+  for (const key in things) {
+    // Ensure the thing and its deleteAt property exist and are valid
+    if (things[key] && typeof things[key].deleteAt === 'number' && things[key].deleteAt > now) {
+      activeThings[key] = things[key];
+    } else {
+      // Log only if it was a valid thing that expired, not if it was malformed
+      if (things[key] && typeof things[key].deleteAt === 'number') {
         console.log(`Thing '${key}' expired and removed.`);
+      } else {
+        console.warn(`Thing '${key}' found in storage but malformed or missing deleteAt. Removing.`);
       }
     }
-    // Save the cleaned list back to localStorage
-    localStorage.setItem(ROOM_STORAGE_KEY, JSON.stringify(activeThings));
-    return activeThings;
-  } catch (error) {
-    console.error("Error loading things from localStorage", error);
-    showError("Erreur lors du chargement des objets.");
-    return {};
   }
+  // Save the cleaned list back to localStorage
+  // This ensures corrupted or expired items are removed from storage
+  saveThings(activeThings); // Call saveThings to persist the cleaned list
+  return activeThings;
 };
 
 const saveThings = (things: Record<string, ThingData>) => {

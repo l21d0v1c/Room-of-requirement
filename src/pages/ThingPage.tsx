@@ -23,6 +23,9 @@ const ThingPage = () => {
       navigate('/');
       return;
     }
+    // Reset file state when thingName changes to ensure clean slate for new/existing thing logic
+    setFile(null); 
+
     const exists = thingExists(thingName);
     setIsExistingThing(exists);
     if (exists) {
