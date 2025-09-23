@@ -25,14 +25,19 @@ const ThingPage = () => {
       return;
     }
     
-    // Reset file state when thingName changes to ensure clean slate for new/existing thing logic
     setFile(null); 
-    setMagicWord(''); // Also reset magic word input
+    setMagicWord(''); 
 
     const exists = thingExists(thingName);
     console.log(`ThingPage: thingExists("${thingName}") returned: ${exists}`);
     setIsExistingThing(exists);
   }, [thingName, navigate]);
+
+  // Log the state for debugging rendering
+  useEffect(() => {
+    console.log(`ThingPage: Current state - isExistingThing: ${isExistingThing}, file: ${!!file}`);
+  }, [isExistingThing, file]);
+
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
@@ -70,28 +75,26 @@ const ThingPage = () => {
       if (storedThing.magicWord === magicWord.trim()) {
         showSuccess("Mot magique correct ! Téléchargement de l'objet...");
         
-        // Trigger file download
         const byteCharacters = atob(storedThing.fileContent);
         const byteNumbers = new Array(byteCharacters.length);
         for (let i = 0; i < byteCharacters.length; i++) {
           byteNumbers[i] = byteCharacters.charCodeAt(i);
         }
         const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray], { type: 'application/octet-stream' }); // Generic type
+        const blob = new Blob([byteArray], { type: 'application/octet-stream' }); 
         
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = storedThing.name; // Use the thing name as the download filename
+        a.download = storedThing.name; 
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
 
         showSuccess("L'objet disparaîtra dans deux jours.");
-        scheduleThingDeletion(thingName, 2); // Schedule deletion for 2 days later
+        scheduleThingDeletion(thingName, 2); 
         
-        // After download, redirect to homepage
         setTimeout(() => navigate('/'), 3000);
 
       } else {
@@ -109,14 +112,12 @@ const ThingPage = () => {
       const reader = new FileReader();
       reader.onload = (e) => {
         const fileContent = e.target?.result as string;
-        // Remove the data URL prefix (e.g., "data:application/pdf;base64,")
         const base64Content = fileContent.split(',')[1];
 
         if (saveThing(thingName, base64Content, magicWord.trim())) {
           showSuccess("Objet enregistré avec succès !");
           navigate('/');
         } else {
-          // Error message already shown by saveThing
           navigate('/');
         }
       };

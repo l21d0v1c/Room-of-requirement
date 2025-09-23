@@ -14,43 +14,41 @@ const getThings = (): Record<string, ThingData> => {
   let things: Record<string, ThingData> = {};
   try {
     const thingsString = localStorage.getItem(ROOM_STORAGE_KEY);
+    console.log("roomStorage: Raw thingsString from localStorage:", thingsString);
     if (thingsString) {
       things = JSON.parse(thingsString);
+      console.log("roomStorage: Parsed things from localStorage:", things);
     }
   } catch (error) {
-    console.error("Error parsing things from localStorage", error);
+    console.error("roomStorage: Error parsing things from localStorage", error);
     showError("Erreur lors du chargement des objets.");
-    // If parsing fails, we start with an empty object to prevent further errors
     things = {}; 
   }
   
-  // Filter out expired things
   const now = Date.now();
   const activeThings: Record<string, ThingData> = {};
   for (const key in things) {
-    // Ensure the thing and its deleteAt property exist and are valid
     if (things[key] && typeof things[key].deleteAt === 'number' && things[key].deleteAt > now) {
       activeThings[key] = things[key];
     } else {
-      // Log only if it was a valid thing that expired, not if it was malformed
       if (things[key] && typeof things[key].deleteAt === 'number') {
-        console.log(`Thing '${key}' expired and removed.`);
+        console.log(`roomStorage: Thing '${key}' expired (deleteAt: ${new Date(things[key].deleteAt).toLocaleString()}) and removed.`);
       } else {
-        console.warn(`Thing '${key}' found in storage but malformed or missing deleteAt. Removing.`);
+        console.warn(`roomStorage: Thing '${key}' found in storage but malformed or missing deleteAt. Removing.`);
       }
     }
   }
-  // Save the cleaned list back to localStorage
-  // This ensures corrupted or expired items are removed from storage
-  saveThings(activeThings); // Call saveThings to persist the cleaned list
+  console.log("roomStorage: Active things after filtering:", activeThings);
+  saveThings(activeThings); 
   return activeThings;
 };
 
 const saveThings = (things: Record<string, ThingData>) => {
   try {
     localStorage.setItem(ROOM_STORAGE_KEY, JSON.stringify(things));
+    console.log("roomStorage: Saved things to localStorage:", things);
   } catch (error) {
-    console.error("Error saving things to localStorage", error);
+    console.error("roomStorage: Error saving things to localStorage", error);
     showError("Erreur lors de la sauvegarde des objets.");
   }
 };
@@ -69,11 +67,11 @@ export const saveThing = (name: string, fileContent: string, magicWord: string):
     fileContent,
     magicWord,
     createdAt: now,
-    // Initially, no deletion scheduled until downloaded
     deleteAt: Infinity, 
   };
   things[normalizedName] = newThing;
   saveThings(things);
+  console.log(`roomStorage: Thing '${name}' saved with deleteAt: Infinity`);
   return true;
 };
 
@@ -83,11 +81,12 @@ export const loadThing = (name: string): ThingData | null => {
   const thing = things[normalizedName];
 
   if (thing && thing.deleteAt <= Date.now()) {
-    // If it's expired, delete it and return null
+    console.log(`roomStorage: Thing '${name}' found but expired during load. Deleting.`);
     delete things[normalizedName];
     saveThings(things);
     return null;
   }
+  console.log(`roomStorage: Loaded thing '${name}':`, thing);
   return thing || null;
 };
 
@@ -97,6 +96,7 @@ export const deleteThing = (name: string) => {
   if (things[normalizedName]) {
     delete things[normalizedName];
     saveThings(things);
+    console.log(`roomStorage: Thing '${name}' deleted.`);
   }
 };
 
@@ -107,11 +107,14 @@ export const scheduleThingDeletion = (name: string, days: number) => {
     const deleteTimestamp = Date.now() + days * 24 * 60 * 60 * 1000; // days in milliseconds
     things[normalizedName].deleteAt = deleteTimestamp;
     saveThings(things);
+    console.log(`roomStorage: Thing '${name}' scheduled for deletion at: ${new Date(deleteTimestamp).toLocaleString()}`);
   }
 };
 
 export const thingExists = (name: string): boolean => {
   const things = getThings();
   const normalizedName = name.toLowerCase();
-  return !!things[normalizedName];
+  const exists = !!things[normalizedName];
+  console.log(`roomStorage: Checking existence for '${name}' (normalized: '${normalizedName}'). Exists: ${exists}`);
+  return exists;
 };
