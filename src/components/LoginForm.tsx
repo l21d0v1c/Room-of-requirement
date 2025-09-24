@@ -40,9 +40,9 @@ const LoginForm = () => {
     try {
       let userIdentifier = values.email; // C'est l'entrée "Thing" de l'utilisateur
 
-      // Si l'identifiant ne contient pas '@', ajoutez '@example.com'
+      // Si l'identifiant ne contient pas '@', ajoutez '@notreal.com'
       if (!userIdentifier.includes('@')) {
-        userIdentifier = `${userIdentifier}@example.com`;
+        userIdentifier = `${userIdentifier}@notreal.com`;
       }
 
       // 1. Tenter de se connecter
