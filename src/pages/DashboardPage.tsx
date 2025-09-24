@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
 import { useNavigate } from 'react-router-dom';
@@ -8,6 +8,22 @@ import { showError, showSuccess } from '@/utils/toast';
 
 const DashboardPage = () => {
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+      } else {
+        // If no user, redirect to login
+        navigate('/');
+      }
+    };
+    fetchUser();
+  }, [navigate]);
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
@@ -19,10 +35,47 @@ const DashboardPage = () => {
     }
   };
 
-  const handleLoadThing = () => {
-    // Logique pour "charger une chose" ici
-    showSuccess("Chargement d'une chose...");
-    console.log("Load a thing button clicked!");
+  const handleLoadThingClick = () => {
+    fileInputRef.current?.click(); // Déclenche le clic sur l'input de fichier masqué
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    if (!userId) {
+      showError("Impossible de télécharger le fichier : utilisateur non identifié.");
+      return;
+    }
+
+    setIsUploading(true);
+    const toastId = showSuccess("Téléchargement en cours...");
+
+    try {
+      const filePath = `${userId}/${Date.now()}_${file.name}`; // Chemin unique pour le fichier
+      const { error } = await supabase.storage
+        .from('things') // Nom du bucket Supabase
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false,
+        });
+
+      if (error) {
+        showError(`Erreur lors du téléchargement : ${error.message}`);
+      } else {
+        showSuccess("Fichier téléchargé avec succès !");
+      }
+    } catch (err: any) {
+      showError(`Une erreur inattendue est survenue : ${err.message}`);
+    } finally {
+      setIsUploading(false);
+      // Reset the file input to allow uploading the same file again if needed
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
   };
 
   return (
@@ -30,10 +83,16 @@ const DashboardPage = () => {
       <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-100 mb-8">
         Room of Requirement
       </h1>
-      <Button onClick={handleLoadThing} className="mt-4 mb-4">
-        Load a thing
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        className="hidden" // Masque l'input de fichier
+      />
+      <Button onClick={handleLoadThingClick} className="mt-4 mb-4" disabled={isUploading || !userId}>
+        {isUploading ? "Téléchargement..." : "Load a thing"}
       </Button>
-      <Button onClick={handleLogout} className="mt-4">
+      <Button onClick={handleLogout} className="mt-4" disabled={isUploading}>
         Se déconnecter
       </Button>
     </div>
