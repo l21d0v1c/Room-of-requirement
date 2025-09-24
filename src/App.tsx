@@ -18,6 +18,8 @@ const App = () => (
         className="dark" 
         classNames={{
           toast: "font-cinzel-decorative", // Applique la police Cinzel Decorative aux toasts
+          title: "font-cinzel-decorative", // Applique la police Cinzel Decorative aux titres
+          description: "font-cinzel-decorative", // Applique la police Cinzel Decorative aux descriptions
         }}
       />
       <BrowserRouter>
