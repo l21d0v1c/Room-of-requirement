@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button"; // Garde l'import pour d'autres usages si nécessaire
 import {
   Form,
   FormControl,
@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { showSuccess, showError } from "@/utils/toast";
 import { supabase } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
+import TriangularButton from '@/components/TriangularButton'; // Importe le nouveau composant
 
 const formSchema = z.object({
   email: z.string().min(1, { message: "Le champ 'Thing' ne peut pas être vide." }),
@@ -86,12 +87,12 @@ const LoginForm = () => {
   return (
     <div className="mt-8 w-full max-w-sm">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 flex flex-col items-center"> {/* Ajout de flex et items-center pour centrer le bouton */}
           <FormField
             control={form.control}
             name="email"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="w-full"> {/* Assure que l'item prend toute la largeur */}
                 <FormLabel className="text-gray-100 text-center w-full block">Thing</FormLabel>
                 <FormControl>
                   <Input className="bg-transparent text-gray-100 border-gray-100" {...field} />
@@ -104,7 +105,7 @@ const LoginForm = () => {
             control={form.control}
             name="password"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="w-full"> {/* Assure que l'item prend toute la largeur */}
                 <FormLabel className="text-gray-100 text-center w-full block">Magic word</FormLabel>
                 <FormControl>
                   <Input type="password" className="bg-transparent text-gray-100 border-gray-100" {...field} />
@@ -113,9 +114,9 @@ const LoginForm = () => {
               </FormItem>
             )}
           />
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          <TriangularButton type="submit" className="mt-4" disabled={isLoading}> {/* Utilise le nouveau bouton et ajoute une marge */}
             {isLoading ? "Chargement..." : "Evoke"}
-          </Button>
+          </TriangularButton>
         </form>
       </Form>
     </div>
