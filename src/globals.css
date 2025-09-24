@@ -98,4 +98,9 @@
   body {
     @apply bg-background text-foreground font-cinzel-decorative; /* Mise à jour de la classe de police ici */
   }
+
+  /* Règle CSS pour forcer la police sur les toasts de sonner */
+  [data-sonner-toast] * {
+    font-family: 'Cinzel Decorative', serif !important;
+  }
 }

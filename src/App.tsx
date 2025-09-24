@@ -16,11 +16,7 @@ const App = () => (
       <Sonner 
         theme="dark" 
         className="dark" 
-        classNames={{
-          toast: "font-cinzel-decorative", // Applique la police Cinzel Decorative aux toasts
-          title: "font-cinzel-decorative", // Applique la police Cinzel Decorative aux titres
-          description: "font-cinzel-decorative", // Applique la police Cinzel Decorative aux descriptions
-        }}
+        // Suppression des classNames de police, car la règle CSS globale gérera la police
       />
       <BrowserRouter>
         <Routes>
