@@ -51,10 +51,13 @@ const DashboardPage = () => {
     }
 
     setIsUploading(true);
-    const toastId = showSuccess("Téléchargement en cours...");
+    showSuccess("Téléchargement en cours..."); // Affiche le toast de chargement
 
     try {
-      const filePath = `${userId}/${Date.now()}_${file.name}`; // Chemin unique pour le fichier
+      // Nettoyer le nom du fichier pour supprimer les caractères spéciaux
+      const sanitizedFileName = file.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9.\-_]/g, "_");
+      const filePath = `${userId}/${Date.now()}_${sanitizedFileName}`; // Chemin unique pour le fichier
+
       const { error } = await supabase.storage
         .from('things') // Nom du bucket Supabase
         .upload(filePath, file, {
