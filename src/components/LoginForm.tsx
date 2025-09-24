@@ -92,7 +92,7 @@ const LoginForm = () => {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-gray-700 dark:text-gray-200 text-center w-full block">Thing</FormLabel>
+                <FormLabel className="text-gray-100 text-center w-full block">Thing</FormLabel>
                 <FormControl>
                   <Input {...field} />
                 </FormControl>
@@ -105,7 +105,7 @@ const LoginForm = () => {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-gray-700 dark:text-gray-200 text-center w-full block">Magic word</FormLabel>
+                <FormLabel className="text-gray-100 text-center w-full block">Magic word</FormLabel>
                 <FormControl>
                   <Input type="password" {...field} />
                 </FormControl>
