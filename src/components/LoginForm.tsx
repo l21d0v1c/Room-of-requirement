@@ -38,12 +38,16 @@ const LoginForm = () => {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
     try {
-      // Utiliser directement la valeur entrée par l'utilisateur pour l'email
-      const userIdentifier = values.email;
+      let userIdentifier = values.email; // C'est l'entrée "Thing" de l'utilisateur
+
+      // Si l'identifiant ne contient pas '@', ajoutez '@example.com'
+      if (!userIdentifier.includes('@')) {
+        userIdentifier = `${userIdentifier}@example.com`;
+      }
 
       // 1. Tenter de se connecter
       let { data, error } = await supabase.auth.signInWithPassword({
-        email: userIdentifier,
+        email: userIdentifier, // Utiliser l'identifiant potentiellement modifié
         password: values.password,
       });
 
@@ -51,7 +55,7 @@ const LoginForm = () => {
         // Si la connexion échoue, tenter l'inscription
         if (error.message.includes("Invalid login credentials") || error.message.includes("User not found")) {
           const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-            email: userIdentifier,
+            email: userIdentifier, // Utiliser l'identifiant potentiellement modifié
             password: values.password,
           });
 
