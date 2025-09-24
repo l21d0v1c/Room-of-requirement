@@ -69,6 +69,7 @@ const DashboardPage = () => {
         showError(`Erreur lors du téléchargement : ${error.message}`);
       } else {
         showSuccess("Fichier téléchargé avec succès !");
+        navigate('/'); // Rediriger vers la page d'accueil après le téléchargement
       }
     } catch (err: any) {
       showError(`Une erreur inattendue est survenue : ${err.message}`);
