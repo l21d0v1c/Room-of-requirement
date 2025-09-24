@@ -1,5 +1,6 @@
 import React from 'react';
 import LoginForm from '@/components/LoginForm';
+import WelcomePopup from '@/components/WelcomePopup'; // Importe le nouveau composant
 
 const IndexPage = () => {
   return (
@@ -14,6 +15,7 @@ const IndexPage = () => {
       <div className="relative z-10">
         <LoginForm />
       </div>
+      <WelcomePopup /> {/* Ajoute le pop-up ici */}
     </div>
   );
 };
