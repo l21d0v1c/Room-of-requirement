@@ -13,7 +13,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
-      <Sonner theme="dark" /> {/* Ajout de la prop theme="dark" ici */}
+      <Sonner theme="dark" className="dark" /> {/* Ajout de la prop theme="dark" et className="dark" ici */}
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<IndexPage />} />
