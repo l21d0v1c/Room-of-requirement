@@ -93,7 +93,7 @@ const LoginForm = () => {
             name="email"
             render={({ field }) => (
               <FormItem className="w-full"> {/* Assure que l'item prend toute la largeur */}
-                <FormLabel className="text-gray-100 text-center w-full block">Thing</FormLabel>
+                <FormLabel className="text-gray-100 text-center w-full block font-bold">Thing</FormLabel>
                 <FormControl>
                   <Input className="bg-transparent text-gray-100 border-gray-100" {...field} />
                 </FormControl>
@@ -106,7 +106,7 @@ const LoginForm = () => {
             name="password"
             render={({ field }) => (
               <FormItem className="w-full"> {/* Assure que l'item prend toute la largeur */}
-                <FormLabel className="text-gray-100 text-center w-full block">Magic word</FormLabel>
+                <FormLabel className="text-gray-100 text-center w-full block font-bold">Magic word</FormLabel>
                 <FormControl>
                   <Input type="password" className="bg-transparent text-gray-100 border-gray-100" {...field} />
                 </FormControl>
@@ -115,7 +115,7 @@ const LoginForm = () => {
             )}
           />
           <TriangularButton type="submit" className="mt-4" disabled={isLoading}> {/* Utilise le nouveau bouton et ajoute une marge */}
-            {isLoading ? "Chargement..." : "Evoke"}
+            {isLoading ? "Chargement..." : <span className="font-bold">Evoke</span>}
           </TriangularButton>
         </form>
       </Form>
