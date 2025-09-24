@@ -17,7 +17,7 @@ const TriangularButton = React.forwardRef<HTMLButtonElement, TriangularButtonPro
           "relative",
           "w-32 h-24", // Taille fixe pour le triangle
           "flex items-center justify-center",
-          "bg-transparent border border-gray-100 text-gray-100 hover:bg-gray-100/10", // Styles mis à jour ici
+          "bg-transparent border-2 border-gray-100 text-gray-100 hover:bg-gray-100/10", // 'border-2' pour un contour plus épais
           "p-0", // Supprime le padding par défaut pour mieux contrôler le texte
           "overflow-hidden", // Cache tout ce qui dépasse de la forme triangulaire
           className
