@@ -13,7 +13,13 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
-      <Sonner theme="dark" className="dark" /> {/* Ajout de la prop theme="dark" et className="dark" ici */}
+      <Sonner 
+        theme="dark" 
+        className="dark" 
+        classNames={{
+          toast: "font-cinzel-decorative", // Applique la police Cinzel Decorative aux toasts
+        }}
+      />
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<IndexPage />} />
