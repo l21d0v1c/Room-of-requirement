@@ -6,52 +6,56 @@ import { supabase } from '@/lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import { showError, showSuccess } from '@/utils/toast';
 
+const FIXED_FILE_NAME = "the_thing_file"; // Nom de fichier fixe pour le fichier unique de l'utilisateur
+
 const DashboardPage = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
-  const [latestFileToDownload, setLatestFileToDownload] = useState<{ name: string; path: string } | null>(null);
+  const [fileUploaded, setFileUploaded] = useState<boolean>(false); // Indique si un fichier existe pour l'utilisateur
 
-  // Fonction pour récupérer les fichiers de l'utilisateur
-  const fetchUserFiles = async (currentUserId: string) => {
+  // Fonction pour vérifier si le fichier fixe existe pour l'utilisateur
+  const checkIfFileExists = async (currentUserId: string) => {
     try {
       const { data, error } = await supabase.storage
         .from('things')
         .list(currentUserId, {
-          sortBy: { column: 'created_at', order: 'desc' },
-          limit: 1, // Nous ne voulons que le dernier fichier
+          search: FIXED_FILE_NAME, // Recherche le fichier spécifique dans le dossier de l'utilisateur
+          limit: 1
         });
 
       if (error) {
-        console.error("Error listing files:", error.message);
-        showError(`Erreur lors de la récupération des fichiers : ${error.message}`);
-        setLatestFileToDownload(null);
-      } else if (data && data.length > 0) {
-        const latestFile = data[0];
-        // Le chemin complet est 'userId/nom_du_fichier'
-        setLatestFileToDownload({ name: latestFile.name, path: `${currentUserId}/${latestFile.name}` });
+        console.error("Error checking file existence:", error.message);
+        showError(`Erreur lors de la vérification du fichier : ${error.message}`);
+        setFileUploaded(false);
+        return;
+      }
+
+      // Si des données sont retournées et que le nom du fichier correspond, alors le fichier existe
+      if (data && data.length > 0 && data[0].name === FIXED_FILE_NAME) {
+        setFileUploaded(true);
       } else {
-        setLatestFileToDownload(null);
+        setFileUploaded(false);
       }
     } catch (err: any) {
-      console.error("Unexpected error fetching files:", err.message);
-      showError(`Une erreur inattendue est survenue lors de la récupération des fichiers : ${err.message}`);
-      setLatestFileToDownload(null);
+      console.error("Unexpected error checking file existence:", err.message);
+      showError(`Une erreur inattendue est survenue lors de la vérification du fichier : ${err.message}`);
+      setFileUploaded(false);
     }
   };
 
   useEffect(() => {
-    const fetchUserAndFiles = async () => {
+    const fetchUserAndCheckFile = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         setUserId(user.id);
-        await fetchUserFiles(user.id); // Récupère les fichiers dès que l'ID utilisateur est disponible
+        await checkIfFileExists(user.id); // Vérifie l'existence du fichier au chargement
       } else {
         navigate('/');
       }
     };
-    fetchUserAndFiles();
+    fetchUserAndCheckFile();
   }, [navigate]);
 
   const handleLogout = async () => {
@@ -65,15 +69,17 @@ const DashboardPage = () => {
   };
 
   const handleDownloadThing = async () => {
-    if (!latestFileToDownload || !userId) {
-      showError("Aucun fichier à télécharger.");
+    if (!userId) {
+      showError("Impossible de télécharger le fichier : utilisateur non identifié.");
       return;
     }
+
+    const filePath = `${userId}/${FIXED_FILE_NAME}`;
 
     try {
       const { data, error } = await supabase.storage
         .from('things')
-        .download(latestFileToDownload.path);
+        .download(filePath);
 
       if (error) {
         showError(`Erreur lors du téléchargement du fichier : ${error.message}`);
@@ -84,7 +90,9 @@ const DashboardPage = () => {
         const url = URL.createObjectURL(data);
         const a = document.createElement('a');
         a.href = url;
-        a.download = latestFileToDownload.name; // Utilise le nom de fichier original
+        // Le fichier sera téléchargé avec le nom fixe. Si le nom original est requis,
+        // il faudrait le stocker dans les métadonnées lors de l'upload.
+        a.download = FIXED_FILE_NAME; 
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -97,8 +105,8 @@ const DashboardPage = () => {
   };
 
   const handleLoadThingClick = () => {
-    if (latestFileToDownload) {
-      handleDownloadThing(); // Si un fichier existe, télécharge-le
+    if (fileUploaded) {
+      handleDownloadThing(); // Si un fichier existe, le télécharge
     } else {
       fileInputRef.current?.click(); // Sinon, ouvre la boîte de dialogue d'upload
     }
@@ -119,21 +127,21 @@ const DashboardPage = () => {
     showSuccess("Téléchargement en cours...", 2000);
 
     try {
-      const sanitizedFileName = file.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9.\-_]/g, "_");
-      const filePath = `${userId}/${Date.now()}_${sanitizedFileName}`;
+      const filePath = `${userId}/${FIXED_FILE_NAME}`; // Toujours uploader vers le chemin fixe
 
       const { error } = await supabase.storage
         .from('things')
         .upload(filePath, file, {
           cacheControl: '3600',
-          upsert: false,
+          upsert: true, // Important : remplace le fichier existant
+          contentType: file.type, // Définit le type de contenu pour une bonne gestion
         });
 
       if (error) {
         showError(`Erreur lors du téléchargement : ${error.message}`);
       } else {
         showSuccess("Mischief managed", 2000);
-        await fetchUserFiles(userId); // Rafraîchit la liste des fichiers après un upload réussi
+        setFileUploaded(true); // Met à jour l'état pour indiquer qu'un fichier est maintenant uploadé
       }
     } catch (err: any) {
       showError(`Une erreur inattendue est survenue : ${err.message}`);
@@ -157,10 +165,10 @@ const DashboardPage = () => {
         className="hidden"
       />
       <Button onClick={handleLoadThingClick} className="mt-4 mb-4" disabled={isUploading || !userId}>
-        {isUploading ? "Téléchargement..." : (latestFileToDownload ? "Load the thing" : "Load a thing")}
+        {isUploading ? "Téléchargement..." : (fileUploaded ? "Load the thing" : "Load a thing")}
       </Button>
       <Button onClick={handleLogout} className="mt-4" disabled={isUploading}>
-        Se déconnecter
+        Quit the room
       </Button>
     </div>
   );
