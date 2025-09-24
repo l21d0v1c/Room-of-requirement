@@ -30,7 +30,7 @@ const DashboardPage = () => {
     if (error) {
       showError(`Erreur lors de la déconnexion : ${error.message}`);
     } else {
-      showSuccess("Vous avez été déconnecté avec succès.");
+      showSuccess("Vous avez été déconnecté avec succès.", 2000); // Ajout de la durée pour la déconnexion
       navigate('/'); // Rediriger vers la page d'accueil après la déconnexion
     }
   };
@@ -51,7 +51,7 @@ const DashboardPage = () => {
     }
 
     setIsUploading(true);
-    showSuccess("Téléchargement en cours..."); // Affiche le toast de chargement
+    showSuccess("Téléchargement en cours...", 2000); // Affiche le toast de chargement avec durée
 
     try {
       // Nettoyer le nom du fichier pour supprimer les caractères spéciaux
@@ -68,8 +68,8 @@ const DashboardPage = () => {
       if (error) {
         showError(`Erreur lors du téléchargement : ${error.message}`);
       } else {
-        showSuccess("Fichier téléchargé avec succès !");
-        navigate('/'); // Rediriger vers la page d'accueil après le téléchargement
+        showSuccess("Mischief managed", 2000); // Nouveau message et durée
+        // Pas de redirection ici, l'utilisateur reste sur le tableau de bord
       }
     } catch (err: any) {
       showError(`Une erreur inattendue est survenue : ${err.message}`);
