@@ -24,9 +24,6 @@ const DashboardPage = () => {
       <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-100 mb-8">
         Bienvenue dans la Room of Requirement !
       </h1>
-      <p className="text-lg text-gray-600 dark:text-gray-300 mb-8">
-        Vous avez accédé à la page secrète.
-      </p>
       <Button onClick={handleLogout} className="mt-4">
         Se déconnecter
       </Button>
