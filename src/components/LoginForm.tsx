@@ -5,17 +5,18 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
-  import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
-  } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { showSuccess, showError } from "@/utils/toast";
-import { supabase } from "@/lib/supabase"; // Importez le client Supabase
+import { supabase } from "@/lib/supabase";
+import { useNavigate } from "react-router-dom"; // Importez useNavigate
 
 const formSchema = z.object({
   email: z.string().min(1, { message: "Le champ 'Thing' ne peut pas être vide." }),
@@ -25,6 +26,7 @@ const formSchema = z.object({
 const LoginForm = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate(); // Initialisez useNavigate
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -74,6 +76,7 @@ const LoginForm = () => {
       } else if (data.user) {
         showSuccess("Connexion réussie ! Bienvenue dans la Room of Requirement.");
         setIsLoggedIn(true);
+        navigate('/dashboard'); // Rediriger vers la page du tableau de bord
       } else {
         showError("Une erreur inattendue est survenue lors de la connexion.");
         setIsLoggedIn(false);
@@ -87,11 +90,8 @@ const LoginForm = () => {
   };
 
   if (isLoggedIn) {
-    return (
-      <div className="mt-8 text-center text-green-600 dark:text-green-400 text-lg font-semibold">
-        Accès accordé à la Room of Requirement !
-      </div>
-    );
+    // Ce bloc ne sera plus atteint car la redirection se fait avant
+    return null;
   }
 
   return (
