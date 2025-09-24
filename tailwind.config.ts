@@ -18,6 +18,9 @@ export default {
       },
     },
     extend: {
+      fontFamily: { // Ajout de la famille de polices
+        inconsolata: ['Inconsolata', 'monospace'],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
