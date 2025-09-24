@@ -94,7 +94,7 @@ const LoginForm = () => {
               <FormItem>
                 <FormLabel className="text-gray-100 text-center w-full block">Thing</FormLabel>
                 <FormControl>
-                  <Input className="bg-gray-200 text-gray-800 border-gray-400" {...field} />
+                  <Input className="bg-transparent text-gray-100 border-gray-100" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -107,7 +107,7 @@ const LoginForm = () => {
               <FormItem>
                 <FormLabel className="text-gray-100 text-center w-full block">Magic word</FormLabel>
                 <FormControl>
-                  <Input type="password" className="bg-gray-200 text-gray-800 border-gray-400" {...field} />
+                  <Input type="password" className="bg-transparent text-gray-100 border-gray-100" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
