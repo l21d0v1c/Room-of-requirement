@@ -18,7 +18,7 @@ import { showSuccess, showError } from "@/utils/toast";
 import { supabase } from "@/lib/supabase"; // Importez le client Supabase
 
 const formSchema = z.object({
-  email: z.string().email({ message: "Veuillez entrer un nom d'utilisateur au format email valide." }),
+  email: z.string().min(1, { message: "Le nom d'utilisateur ne peut pas être vide." }),
   password: z.string().min(6, { message: "Le mot de passe doit contenir au moins 6 caractères." }),
 });
 
@@ -37,9 +37,15 @@ const LoginForm = () => {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
     try {
+      let processedEmail = values.email;
+      // Ajouter "@exemple.com" si l'email ne contient pas de "@"
+      if (!processedEmail.includes("@")) {
+        processedEmail = `${processedEmail}@exemple.com`;
+      }
+
       // 1. Tenter de se connecter
       let { data, error } = await supabase.auth.signInWithPassword({
-        email: values.email,
+        email: processedEmail,
         password: values.password,
       });
 
@@ -47,7 +53,7 @@ const LoginForm = () => {
         // Si la connexion échoue, tenter l'inscription
         if (error.message.includes("Invalid login credentials") || error.message.includes("User not found")) {
           const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-            email: values.email,
+            email: processedEmail,
             password: values.password,
           });
 
@@ -56,9 +62,6 @@ const LoginForm = () => {
             setIsLoggedIn(false);
           } else if (signUpData.user) {
             showSuccess("Inscription réussie ! Veuillez vérifier votre email pour confirmer votre compte.");
-            // Note: Supabase par défaut envoie un email de confirmation.
-            // L'utilisateur ne sera pas connecté tant que l'email n'est pas confirmé.
-            // Pour une connexion immédiate après inscription, la confirmation par email doit être désactivée dans les paramètres Supabase.
             setIsLoggedIn(false); // L'utilisateur doit confirmer son email
           } else {
             showError("Une erreur inattendue est survenue lors de l'inscription.");
@@ -102,7 +105,7 @@ const LoginForm = () => {
               <FormItem>
                 <FormLabel className="text-gray-700 dark:text-gray-200">Nom d'utilisateur</FormLabel>
                 <FormControl>
-                  <Input placeholder="Entrez votre nom d'utilisateur (format email)" {...field} />
+                  <Input placeholder="Entrez votre nom d'utilisateur" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
