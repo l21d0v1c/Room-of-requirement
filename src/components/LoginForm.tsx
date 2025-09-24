@@ -38,15 +38,12 @@ const LoginForm = () => {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
     try {
-      let processedEmail = values.email;
-      // Ajouter "@exemple.com" si l'email ne contient pas de "@"
-      if (!processedEmail.includes("@")) {
-        processedEmail = `${processedEmail}@exemple.com`;
-      }
+      // Utiliser directement la valeur entrée par l'utilisateur pour l'email
+      const userIdentifier = values.email;
 
       // 1. Tenter de se connecter
       let { data, error } = await supabase.auth.signInWithPassword({
-        email: processedEmail,
+        email: userIdentifier,
         password: values.password,
       });
 
@@ -54,15 +51,13 @@ const LoginForm = () => {
         // Si la connexion échoue, tenter l'inscription
         if (error.message.includes("Invalid login credentials") || error.message.includes("User not found")) {
           const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-            email: processedEmail,
+            email: userIdentifier,
             password: values.password,
           });
 
           if (signUpError) {
             showError(`Erreur lors de l'inscription : ${signUpError.message}`);
           } else if (signUpData.user) {
-            // Si l'inscription réussit et qu'un utilisateur est créé,
-            // on considère qu'il est connecté (si la confirmation d'email est désactivée dans Supabase)
             showSuccess("Inscription réussie ! Bienvenue dans la Room of Requirement.");
             navigate('/dashboard'); // Rediriger vers la page du tableau de bord
           } else {
