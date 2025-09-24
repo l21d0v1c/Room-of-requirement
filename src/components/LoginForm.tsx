@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { useForm } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import {
@@ -117,7 +118,7 @@ const LoginForm = () => {
               <FormItem>
                 <FormLabel className="text-gray-700 dark:text-gray-200">Magic word</FormLabel>
                 <FormControl>
-                  <Input type="password" {...field} />
+                  <Input type="password" placeholder="Entrez le Magic word" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
