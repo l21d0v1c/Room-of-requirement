@@ -18,7 +18,7 @@ import { showSuccess, showError } from "@/utils/toast";
 import { supabase } from "@/lib/supabase"; // Importez le client Supabase
 
 const formSchema = z.object({
-  email: z.string().email({ message: "Veuillez entrer une adresse email valide." }),
+  email: z.string().email({ message: "Veuillez entrer un nom d'utilisateur au format email valide." }),
   password: z.string().min(6, { message: "Le mot de passe doit contenir au moins 6 caractères." }),
 });
 
@@ -100,9 +100,9 @@ const LoginForm = () => {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-gray-700 dark:text-gray-200">Email</FormLabel>
+                <FormLabel className="text-gray-700 dark:text-gray-200">Nom d'utilisateur</FormLabel>
                 <FormControl>
-                  <Input placeholder="Entrez votre email" {...field} />
+                  <Input placeholder="Entrez votre nom d'utilisateur (format email)" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
