@@ -1,7 +1,7 @@
 import { toast } from "sonner";
 
-export const showSuccess = (message: string) => {
-  toast.success(message);
+export const showSuccess = (message: string, duration: number = 3000) => { // Ajout de 'duration' avec une valeur par défaut de 3000ms
+  toast.success(message, { duration });
 };
 
 export const showError = (message: string) => {

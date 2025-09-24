@@ -62,7 +62,7 @@ const LoginForm = () => {
           if (signUpError) {
             showError(`Erreur lors de l'inscription : ${signUpError.message}`);
           } else if (signUpData.user) {
-            showSuccess("Inscription réussie ! Bienvenue dans la Room of Requirement.");
+            showSuccess("Invisibility Spell", 2000); // Nouveau message et durée
             navigate('/dashboard'); // Rediriger vers la page du tableau de bord
           } else {
             showError("Une erreur inattendue est survenue lors de l'inscription.");
@@ -71,7 +71,7 @@ const LoginForm = () => {
           showError(`Erreur de connexion : ${error.message}`);
         }
       } else if (data.user) {
-        showSuccess("Connexion réussie ! Bienvenue dans la Room of Requirement.");
+        showSuccess("Invisibility Spell", 2000); // Nouveau message et durée
         navigate('/dashboard'); // Rediriger vers la page du tableau de bord
       } else {
         showError("Une erreur inattendue est survenue lors de la connexion.");
