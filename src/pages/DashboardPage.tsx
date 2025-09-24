@@ -125,7 +125,7 @@ const DashboardPage = () => {
 
     setIsUploading(true);
     setUploadProgress(0); // Réinitialise la progression au début de l'upload
-    showSuccess("Téléchargement en cours...", 2000);
+    showSuccess("Creation of the room", 2000); // Message mis à jour ici
 
     try {
       const filePath = `${userId}/${FIXED_FILE_NAME}`;
