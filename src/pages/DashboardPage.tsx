@@ -162,8 +162,11 @@ const DashboardPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
-      <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-100 mb-8">
+    <div 
+      className="min-h-screen flex flex-col items-center justify-center p-4 bg-cover bg-center relative"
+      style={{ backgroundImage: `url('/ultra_white_space_infinity.jpg')` }}
+    >
+      <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-100 mb-8 relative z-10">
         Room of Requirement
       </h1>
       <input
@@ -172,18 +175,18 @@ const DashboardPage = () => {
         onChange={handleFileChange}
         className="hidden"
       />
-      <Button onClick={handleLoadThingClick} className="mt-4 mb-4" disabled={isUploading || !userId}>
+      <Button onClick={handleLoadThingClick} className="mt-4 mb-4 relative z-10" disabled={isUploading || !userId}>
         {isUploading ? "Téléchargement..." : (fileUploaded ? "Load the thing" : "Load a thing")}
       </Button>
 
       {isUploading && (
-        <div className="w-full max-w-xs mb-4">
+        <div className="w-full max-w-xs mb-4 relative z-10">
           <Progress value={uploadProgress} className="w-full" />
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">{uploadProgress}%</p>
         </div>
       )}
 
-      <Button onClick={handleLogout} className="mt-4" disabled={isUploading}>
+      <Button onClick={handleLogout} className="mt-4 relative z-10" disabled={isUploading}>
         Quit the room
       </Button>
     </div>
