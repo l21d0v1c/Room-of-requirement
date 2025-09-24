@@ -19,7 +19,7 @@ import { supabase } from "@/lib/supabase"; // Importez le client Supabase
 
 const formSchema = z.object({
   email: z.string().min(1, { message: "Le champ 'Thing' ne peut pas être vide." }),
-  password: z.string().min(6, { message: "Le mot de passe doit contenir au moins 6 caractères." }),
+  password: z.string().min(6, { message: "Le Magic word doit contenir au moins 6 caractères." }),
 });
 
 const LoginForm = () => {
@@ -116,9 +116,9 @@ const LoginForm = () => {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-gray-700 dark:text-gray-200">Mot de passe</FormLabel>
+                <FormLabel className="text-gray-700 dark:text-gray-200">Magic word</FormLabel>
                 <FormControl>
-                  <Input type="password" placeholder="Entrez le mot de passe" {...field} />
+                  <Input type="password" placeholder="Entrez le Magic word" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
