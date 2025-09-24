@@ -105,7 +105,7 @@ const LoginForm = () => {
               <FormItem>
                 <FormLabel className="text-gray-700 dark:text-gray-200">Thing</FormLabel>
                 <FormControl>
-                  <Input placeholder="Entrez votre Thing" {...field} />
+                  <Input {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
