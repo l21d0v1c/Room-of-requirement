@@ -19,7 +19,7 @@ import { supabase } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
 
 const formSchema = z.object({
-  email: z.string().email({ message: "Veuillez entrer une adresse e-mail valide." }), // Validation d'e-mail stricte
+  email: z.string().min(1, { message: "Le champ 'Thing' ne peut pas être vide." }),
   password: z.string().min(6, { message: "Le Magic word doit contenir au moins 6 caractères." }),
 });
 
@@ -38,13 +38,15 @@ const LoginForm = () => {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
     try {
-      // La validation Zod garantit déjà un format d'e-mail valide,
-      // donc pas besoin d'ajouter "@exemple.com"
-      const email = values.email;
+      let processedEmail = values.email;
+      // Ajouter "@exemple.com" si l'email ne contient pas de "@"
+      if (!processedEmail.includes("@")) {
+        processedEmail = `${processedEmail}@exemple.com`;
+      }
 
       // 1. Tenter de se connecter
       let { data, error } = await supabase.auth.signInWithPassword({
-        email: email,
+        email: processedEmail,
         password: values.password,
       });
 
@@ -52,13 +54,15 @@ const LoginForm = () => {
         // Si la connexion échoue, tenter l'inscription
         if (error.message.includes("Invalid login credentials") || error.message.includes("User not found")) {
           const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-            email: email,
+            email: processedEmail,
             password: values.password,
           });
 
           if (signUpError) {
             showError(`Erreur lors de l'inscription : ${signUpError.message}`);
           } else if (signUpData.user) {
+            // Si l'inscription réussit et qu'un utilisateur est créé,
+            // on considère qu'il est connecté (si la confirmation d'email est désactivée dans Supabase)
             showSuccess("Inscription réussie ! Bienvenue dans la Room of Requirement.");
             navigate('/dashboard'); // Rediriger vers la page du tableau de bord
           } else {
@@ -89,9 +93,9 @@ const LoginForm = () => {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-gray-700 dark:text-gray-200 text-center w-full block">Thing (Email)</FormLabel>
+                <FormLabel className="text-gray-700 dark:text-gray-200 text-center w-full block">Thing</FormLabel>
                 <FormControl>
-                  <Input {...field} placeholder="votre.email@exemple.com" />
+                  <Input {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
