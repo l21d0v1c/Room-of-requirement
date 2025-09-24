@@ -125,7 +125,7 @@ const LoginForm = () => {
             )}
           />
           <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "Chargement..." : "Se connecter / S'inscrire"}
+            {isLoading ? "Chargement..." : "Evoke"}
           </Button>
         </form>
       </Form>
