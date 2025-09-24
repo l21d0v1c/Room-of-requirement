@@ -5,14 +5,14 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+  import {
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+  } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { showSuccess, showError } from "@/utils/toast";
 import { supabase } from "@/lib/supabase"; // Importez le client Supabase
@@ -103,7 +103,7 @@ const LoginForm = () => {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-gray-700 dark:text-gray-200 text-center w-full">Thing</FormLabel>
+                <FormLabel className="text-gray-700 dark:text-gray-200 text-center w-full block">Thing</FormLabel>
                 <FormControl>
                   <Input {...field} />
                 </FormControl>
@@ -116,7 +116,7 @@ const LoginForm = () => {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-gray-700 dark:text-gray-200 text-center w-full">Magic word</FormLabel>
+                <FormLabel className="text-gray-700 dark:text-gray-200 text-center w-full block">Magic word</FormLabel>
                 <FormControl>
                   <Input type="password" {...field} />
                 </FormControl>
