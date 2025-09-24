@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import { showError, showSuccess } from '@/utils/toast';
+import { Progress } from '@/components/ui/progress'; // Importez le composant Progress
 
 const FIXED_FILE_NAME = "the_thing_file"; // Nom de fichier fixe pour le fichier unique de l'utilisateur
 
@@ -14,6 +15,7 @@ const DashboardPage = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [fileUploaded, setFileUploaded] = useState<boolean>(false); // Indique si un fichier existe pour l'utilisateur
+  const [uploadProgress, setUploadProgress] = useState(0); // Nouvel état pour la progression
 
   // Fonction pour vérifier si le fichier fixe existe pour l'utilisateur
   const checkIfFileExists = async (currentUserId: string) => {
@@ -63,7 +65,7 @@ const DashboardPage = () => {
     if (error) {
       showError(`Erreur lors de la déconnexion : ${error.message}`);
     } else {
-      showSuccess("Mischief managed", 2000); // Message mis à jour ici
+      showSuccess("Mischief managed", 2000);
       navigate('/');
     }
   };
@@ -90,14 +92,12 @@ const DashboardPage = () => {
         const url = URL.createObjectURL(data);
         const a = document.createElement('a');
         a.href = url;
-        // Le fichier sera téléchargé avec le nom fixe. Si le nom original est requis,
-        // il faudrait le stocker dans les métadonnées lors de l'upload.
         a.download = FIXED_FILE_NAME; 
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        showSuccess("Room created", 2000); // Message mis à jour ici
+        showSuccess("Room created", 2000);
       }
     } catch (err: any) {
       showError(`Une erreur inattendue est survenue lors du téléchargement : ${err.message}`);
@@ -124,29 +124,37 @@ const DashboardPage = () => {
     }
 
     setIsUploading(true);
+    setUploadProgress(0); // Réinitialise la progression au début de l'upload
     showSuccess("Téléchargement en cours...", 2000);
 
     try {
-      const filePath = `${userId}/${FIXED_FILE_NAME}`; // Toujours uploader vers le chemin fixe
+      const filePath = `${userId}/${FIXED_FILE_NAME}`;
 
       const { error } = await supabase.storage
         .from('things')
         .upload(filePath, file, {
           cacheControl: '3600',
-          upsert: true, // Important : remplace le fichier existant
-          contentType: file.type, // Définit le type de contenu pour une bonne gestion
+          upsert: true,
+          contentType: file.type,
+          onUploadProgress: (event: ProgressEvent) => {
+            if (event.lengthComputable) {
+              const percent = Math.round((event.loaded / event.total) * 100);
+              setUploadProgress(percent);
+            }
+          },
         });
 
       if (error) {
         showError(`Erreur lors du téléchargement : ${error.message}`);
       } else {
         showSuccess("Mischief managed", 2000);
-        setFileUploaded(true); // Met à jour l'état pour indiquer qu'un fichier est maintenant uploadé
+        setFileUploaded(true);
       }
     } catch (err: any) {
       showError(`Une erreur inattendue est survenue : ${err.message}`);
     } finally {
       setIsUploading(false);
+      setUploadProgress(0); // Réinitialise la progression après l'upload
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -167,6 +175,14 @@ const DashboardPage = () => {
       <Button onClick={handleLoadThingClick} className="mt-4 mb-4" disabled={isUploading || !userId}>
         {isUploading ? "Téléchargement..." : (fileUploaded ? "Load the thing" : "Load a thing")}
       </Button>
+
+      {isUploading && (
+        <div className="w-full max-w-xs mb-4">
+          <Progress value={uploadProgress} className="w-full" />
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">{uploadProgress}%</p>
+        </div>
+      )}
+
       <Button onClick={handleLogout} className="mt-4" disabled={isUploading}>
         Quit the room
       </Button>
