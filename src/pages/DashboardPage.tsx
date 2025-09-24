@@ -63,7 +63,7 @@ const DashboardPage = () => {
     if (error) {
       showError(`Erreur lors de la déconnexion : ${error.message}`);
     } else {
-      showSuccess("Vous avez été déconnecté avec succès.", 2000);
+      showSuccess("Mischief managed", 2000); // Message mis à jour ici
       navigate('/');
     }
   };
