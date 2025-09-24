@@ -16,7 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { showSuccess, showError } from "@/utils/toast";
 import { supabase } from "@/lib/supabase";
-import { useNavigate } from "react-router-dom"; // Importez useNavigate
+import { useNavigate } from "react-router-dom";
 
 const formSchema = z.object({
   email: z.string().min(1, { message: "Le champ 'Thing' ne peut pas être vide." }),
@@ -24,9 +24,8 @@ const formSchema = z.object({
 });
 
 const LoginForm = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate(); // Initialisez useNavigate
+  const navigate = useNavigate();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -61,38 +60,29 @@ const LoginForm = () => {
 
           if (signUpError) {
             showError(`Erreur lors de l'inscription : ${signUpError.message}`);
-            setIsLoggedIn(false);
           } else if (signUpData.user) {
-            showSuccess("Inscription réussie ! Veuillez vérifier votre email pour confirmer votre compte.");
-            setIsLoggedIn(false); // L'utilisateur doit confirmer son email
+            // Si l'inscription réussit et qu'un utilisateur est créé,
+            // on considère qu'il est connecté (si la confirmation d'email est désactivée dans Supabase)
+            showSuccess("Inscription réussie ! Bienvenue dans la Room of Requirement.");
+            navigate('/dashboard'); // Rediriger vers la page du tableau de bord
           } else {
             showError("Une erreur inattendue est survenue lors de l'inscription.");
-            setIsLoggedIn(false);
           }
         } else {
           showError(`Erreur de connexion : ${error.message}`);
-          setIsLoggedIn(false);
         }
       } else if (data.user) {
         showSuccess("Connexion réussie ! Bienvenue dans la Room of Requirement.");
-        setIsLoggedIn(true);
         navigate('/dashboard'); // Rediriger vers la page du tableau de bord
       } else {
         showError("Une erreur inattendue est survenue lors de la connexion.");
-        setIsLoggedIn(false);
       }
     } catch (err: any) {
       showError(`Une erreur inattendue est survenue : ${err.message}`);
-      setIsLoggedIn(false);
     } finally {
       setIsLoading(false);
     }
   };
-
-  if (isLoggedIn) {
-    // Ce bloc ne sera plus atteint car la redirection se fait avant
-    return null;
-  }
 
   return (
     <div className="mt-8 w-full max-w-sm">
