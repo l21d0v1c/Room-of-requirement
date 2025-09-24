@@ -118,7 +118,7 @@ const LoginForm = () => {
               <FormItem>
                 <FormLabel className="text-gray-700 dark:text-gray-200">Magic word</FormLabel>
                 <FormControl>
-                  <Input type="password" placeholder="Entrez le Magic word" {...field} />
+                  <Input type="password" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
