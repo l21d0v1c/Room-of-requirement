@@ -97,7 +97,7 @@ const DashboardPage = () => {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        showSuccess("Fichier téléchargé avec succès !", 2000);
+        showSuccess("Room created", 2000); // Message mis à jour ici
       }
     } catch (err: any) {
       showError(`Une erreur inattendue est survenue lors du téléchargement : ${err.message}`);
