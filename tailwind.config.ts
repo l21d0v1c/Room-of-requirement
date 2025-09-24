@@ -18,8 +18,8 @@ export default {
       },
     },
     extend: {
-      fontFamily: { // Ajout de la famille de polices
-        inconsolata: ['Inconsolata', 'monospace'],
+      fontFamily: { // Mise à jour de la famille de polices
+        "cinzel-decorative": ['Cinzel Decorative', 'serif'],
       },
       colors: {
         border: "hsl(var(--border))",

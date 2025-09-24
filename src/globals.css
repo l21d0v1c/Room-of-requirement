@@ -96,6 +96,6 @@
   }
 
   body {
-    @apply bg-background text-foreground font-inconsolata; /* Ajout de la classe de police ici */
+    @apply bg-background text-foreground font-cinzel-decorative; /* Mise à jour de la classe de police ici */
   }
 }
