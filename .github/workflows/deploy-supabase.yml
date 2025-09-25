@@ -18,5 +18,6 @@ jobs:
 
       - name: Deploy function to Supabase
         run: supabase functions deploy register-download --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
+             supabase functions deploy delete-expired-files --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
