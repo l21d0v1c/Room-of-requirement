@@ -13,8 +13,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Install Supabase CLI
-        run: npm install -g supabase
+      - name: Deploy functions to Supabase
+        run: |
+         npx supabase functions deploy register-download --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
+         npx supabase functions deploy delete-expired-files --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
+        env:
+         SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
       - name: Deploy functions to Supabase
         run: |
