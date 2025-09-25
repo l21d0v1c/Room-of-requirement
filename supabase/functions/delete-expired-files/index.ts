@@ -34,4 +34,4 @@ serve(async () => {
 
   return new Response("Fichiers expirés supprimés", { status: 200 });
 });
-// je tape un commentaire pour dans ce fichier pour lancer le workflow github, encore.
+// je tape un commentaire pour dans ce fichier pour lancer le workflow github
